@@ -1,3 +1,5 @@
+mod fio;
+
 use crate::errors::Result;
 
 pub trait IOManager {
@@ -13,7 +15,7 @@ pub trait IOManager {
     /// Returns a `Result` indicating the result of the read operation. If the read is successful,
     /// it returns `Ok(bytes_read)` where `bytes_read` is the number of bytes read into the buffer.
     /// If an error occurs during the read operation, it returns `Err(error)` with an associated error value.
-    fn read(&self, buf: &[u8], offset: u64) -> Result<usize>;
+    fn read(&self, buf: &mut [u8], offset: u64) -> Result<usize>;
 
     /// Writes data from the provided buffer to the underlying storage.
     ///
@@ -26,7 +28,7 @@ pub trait IOManager {
     /// Returns a `Result` indicating the result of the write operation. If the write is successful,
     /// it returns `Ok(bytes_written)` where `bytes_written` is the number of bytes written from the buffer.
     /// If an error occurs during the write operation, it returns `Err(error)` with an associated error value.
-    fn write(&self, buf: &mut [u8]) -> Result<usize>;
+    fn write(&self, buf: &[u8]) -> Result<usize>;
 
     /// Ensures that all previous write operations are persisted to the underlying storage.
     ///
