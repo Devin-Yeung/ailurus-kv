@@ -1,3 +1,4 @@
+mod btree;
 use crate::data::log_record::LogRecordPos;
 
 pub trait Indexer {
