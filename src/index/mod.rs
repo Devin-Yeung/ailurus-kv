@@ -12,7 +12,7 @@ pub trait Indexer {
     /// # Returns
     ///
     /// Returns `true` if the insertion was successful, `false` otherwise.
-    fn put(&self, key: Vec<u8>, pos: LogRecordPos) -> bool;
+    fn put(&mut self, key: Vec<u8>, pos: LogRecordPos) -> bool;
 
     /// Retrieves the position of a key in the index, if it exists.
     ///
@@ -35,5 +35,5 @@ pub trait Indexer {
     /// # Returns
     ///
     /// Returns `true` if the deletion was successful, `false` otherwise.
-    fn delete(&self, key: Vec<u8>) -> bool;
+    fn delete(&mut self, key: Vec<u8>) -> bool;
 }

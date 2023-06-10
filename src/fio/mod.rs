@@ -28,7 +28,7 @@ pub trait IOManager {
     /// Returns a `Result` indicating the result of the write operation. If the write is successful,
     /// it returns `Ok(bytes_written)` where `bytes_written` is the number of bytes written from the buffer.
     /// If an error occurs during the write operation, it returns `Err(error)` with an associated error value.
-    fn write(&self, buf: &[u8]) -> Result<usize>;
+    fn write(&mut self, buf: &[u8]) -> Result<usize>;
 
     /// Ensures that all previous write operations are persisted to the underlying storage.
     ///

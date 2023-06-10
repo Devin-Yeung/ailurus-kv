@@ -39,7 +39,7 @@ impl IOManager for FileIO {
         };
     }
 
-    fn write(&self, buf: &[u8]) -> Result<usize> {
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let mut writer = self.fd.write();
         return match writer.write(buf) {
             Ok(n) => { Ok(n) }

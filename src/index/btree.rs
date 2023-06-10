@@ -18,7 +18,7 @@ impl BTree {
 }
 
 impl Indexer for BTree {
-    fn put(&self, key: Vec<u8>, pos: LogRecordPos) -> bool {
+    fn put(&mut self, key: Vec<u8>, pos: LogRecordPos) -> bool {
         let mut writer = self.tree.write();
         writer.insert(key, pos);
         true
@@ -29,7 +29,7 @@ impl Indexer for BTree {
         reader.get(&key).copied()
     }
 
-    fn delete(&self, key: Vec<u8>) -> bool {
+    fn delete(&mut self, key: Vec<u8>) -> bool {
         let mut writer = self.tree.write();
         writer.remove(&key).is_some()
     }
@@ -41,14 +41,14 @@ mod tests {
 
     #[test]
     fn put() {
-        let b = BTree::new();
+        let mut b = BTree::new();
         assert!(b.put("".as_bytes().to_vec(), LogRecordPos { file_id: 42, offset: 42 }));
         assert!(b.put("".as_bytes().to_vec(), LogRecordPos { file_id: 1024, offset: 1024 }));
     }
 
     #[test]
     fn get() {
-        let b = BTree::new();
+        let mut b = BTree::new();
         assert!(b.put("42".as_bytes().to_vec(), LogRecordPos { file_id: 42, offset: 42 }));
         assert!(b.put("1024".as_bytes().to_vec(), LogRecordPos { file_id: 1024, offset: 1024 }));
 
@@ -67,7 +67,7 @@ mod tests {
 
     #[test]
     fn delete() {
-        let b = BTree::new();
+        let mut b = BTree::new();
         assert!(b.put("42".as_bytes().to_vec(), LogRecordPos { file_id: 42, offset: 42 }));
         assert!(b.put("1024".as_bytes().to_vec(), LogRecordPos { file_id: 1024, offset: 1024 }));
 
