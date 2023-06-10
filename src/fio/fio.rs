@@ -54,3 +54,52 @@ impl IOManager for FileIO {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+    use std::fs;
+    use super::*;
+
+    fn tmp_file() -> PathBuf {
+        let _ = fs::create_dir("tmp");
+
+        let temp_file = tempfile::Builder::new()
+            .prefix("ailurus_kv")
+            .tempfile_in("tmp")
+            .unwrap();
+        temp_file.path().to_owned()
+    }
+
+    #[test]
+    fn test_read_success() {
+        let file_path = tmp_file();
+        let mut file = FileIO::new(&file_path).unwrap();
+        let data = b"Hello, World!";
+        file.write(data).unwrap();
+
+        let mut buf = vec![0; data.len()];
+        let result = file.read(&mut buf, 0);
+        assert_eq!(result, Ok(data.len()));
+        assert_eq!(buf, data);
+
+        fs::remove_file(&file_path).unwrap();
+    }
+
+    #[test]
+    fn test_write_success() {
+        let file_path = tmp_file();
+        let mut file = FileIO::new(&file_path).unwrap();
+        let data = b"Hello, World!";
+
+        let result = file.write(data);
+        assert_eq!(result, Ok(data.len()));
+
+        let mut buf = vec![0; data.len()];
+        let _ = file.sync();
+        let _ = file.read(&mut buf, 0);
+        assert_eq!(buf, data);
+
+        fs::remove_file(&file_path).unwrap();
+    }
+}
