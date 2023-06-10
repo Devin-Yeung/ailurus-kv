@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 parking_lot = "0.12.1"
+tempfile = "3.6.0"
 thiserror = "1.0.40"
