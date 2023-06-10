@@ -1,11 +1,11 @@
+use crate::errors::{Errors, Result};
+use crate::fio::IOManager;
+use parking_lot::RwLock;
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
+use std::io::Write;
 use std::os::unix::fs::FileExt;
 use std::path::Path;
 use std::sync::Arc;
-use parking_lot::RwLock;
-use crate::fio::IOManager;
-use crate::errors::{Errors, Result};
 
 pub struct FileIO {
     /// file io wrapper
@@ -19,14 +19,13 @@ impl FileIO {
             .read(true)
             .write(true)
             .append(true)
-            .open(path) {
-            Ok(file) => {
-                Ok(FileIO { fd: Arc::new(RwLock::new(file)) })
-            }
-            Err(e) => {
-                Err(Errors::FailToOpenFile)
-            }
-        }
+            .open(path)
+        {
+            Ok(file) => Ok(FileIO {
+                fd: Arc::new(RwLock::new(file)),
+            }),
+            Err(_e) => Err(Errors::FailToOpenFile),
+        };
     }
 }
 
@@ -34,16 +33,16 @@ impl IOManager for FileIO {
     fn read(&self, buf: &mut [u8], offset: u64) -> Result<usize> {
         let reader = self.fd.read();
         return match reader.read_at(buf, offset) {
-            Ok(n) => { Ok(n) }
-            Err(_) => { Err(Errors::FailToReadFromFile) }
+            Ok(n) => Ok(n),
+            Err(_) => Err(Errors::FailToReadFromFile),
         };
     }
 
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let mut writer = self.fd.write();
         return match writer.write(buf) {
-            Ok(n) => { Ok(n) }
-            Err(_) => { Err(Errors::FailToWriteToFile) }
+            Ok(n) => Ok(n),
+            Err(_) => Err(Errors::FailToWriteToFile),
         };
     }
 

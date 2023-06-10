@@ -1,4 +1,4 @@
-pub mod index;
 pub mod data;
-pub mod fio;
 pub mod errors;
+pub mod fio;
+pub mod index;
