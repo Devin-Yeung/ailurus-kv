@@ -2,7 +2,7 @@ mod fio;
 
 use crate::errors::Result;
 
-pub trait IOManager {
+pub trait IOManager: Send + Sync {
     /// Reads data from the underlying storage into the provided buffer.
     ///
     /// # Arguments
