@@ -1,4 +1,5 @@
 use std::path::Path;
+use crate::data::log_record::LogRecord;
 use crate::fio;
 use crate::errors::Result;
 
@@ -26,6 +27,10 @@ impl DataFile {
     }
 
     pub fn sync(&self) -> Result<()> {
+        todo!()
+    }
+
+    pub fn read(&self, offset: u64) -> Result<LogRecord> {
         todo!()
     }
 }

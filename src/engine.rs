@@ -32,6 +32,32 @@ impl Engine {
         }
     }
 
+    pub fn get(&self, key: Bytes) -> Result<Bytes> {
+        if key.is_empty() {
+            return Err(Errors::EmptyKey);
+        }
+
+        let pos = match self.index.get(key.to_vec()) {
+            None => return Err(Errors::KeyNotFound),
+            Some(x) => x
+        };
+
+        let log_record = match self.active_file.id() == pos.file_id {
+            true => self.active_file.read(pos.offset)?,
+            false => {
+                match self.older_file.get(&pos.file_id) {
+                    None => return Err(Errors::DatafileNotFound),
+                    Some(x) => x.read(pos.offset)?
+                }
+            }
+        };
+
+        return match log_record.record_type {
+            LogRecordType::Normal => Ok(log_record.into()),
+            LogRecordType::Deleted => Err(Errors::KeyNotFound), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
+        };
+    }
+
     fn append_log_record(&mut self, record: LogRecord) -> Result<LogRecordPos> {
         let dir_path = &self.options.dir_path;
 

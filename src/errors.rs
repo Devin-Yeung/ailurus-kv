@@ -12,6 +12,10 @@ pub enum Errors {
     FailToSyncFile,
     #[error("Key is empty")]
     EmptyKey,
+    #[error("Key not found in storage")]
+    KeyNotFound,
+    #[error("Datafile not found in storage")]
+    DatafileNotFound,
     #[error("Fail to update the memory index")]
     IndexUpdateFail,
 }

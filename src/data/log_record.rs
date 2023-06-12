@@ -1,3 +1,5 @@
+use bytes::Bytes;
+
 #[non_exhaustive]
 pub enum LogRecordType {
     Normal,
@@ -8,6 +10,12 @@ pub struct LogRecord {
     pub(crate) key: Vec<u8>,
     pub(crate) value: Vec<u8>,
     pub(crate) record_type: LogRecordType,
+}
+
+impl Into<Bytes> for LogRecord {
+    fn into(self) -> Bytes {
+        todo!()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
