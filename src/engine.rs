@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-use bytes::Bytes;
 use crate::data::data_file::DataFile;
 use crate::data::log_record::{LogRecord, LogRecordPos, LogRecordType};
-use crate::errors::{Result, Errors};
-use crate::{index, options};
 use crate::errors::Errors::IndexUpdateFail;
+use crate::errors::{Errors, Result};
+use crate::{index, options};
+use bytes::Bytes;
+use std::collections::HashMap;
 
 pub struct Engine {
     options: options::Options,
@@ -28,7 +28,7 @@ impl Engine {
         let log_record_pos = self.append_log_record(record)?;
         match self.index.put(key.to_vec(), log_record_pos) {
             true => Ok(()),
-            false => Err(IndexUpdateFail)
+            false => Err(IndexUpdateFail),
         }
     }
 
@@ -39,17 +39,15 @@ impl Engine {
 
         let pos = match self.index.get(key.to_vec()) {
             None => return Err(Errors::KeyNotFound),
-            Some(x) => x
+            Some(x) => x,
         };
 
         let log_record = match self.active_file.id() == pos.file_id {
             true => self.active_file.read(pos.offset)?,
-            false => {
-                match self.older_file.get(&pos.file_id) {
-                    None => return Err(Errors::DatafileNotFound),
-                    Some(x) => x.read(pos.offset)?
-                }
-            }
+            false => match self.older_file.get(&pos.file_id) {
+                None => return Err(Errors::DatafileNotFound),
+                Some(x) => x.read(pos.offset)?,
+            },
         };
 
         return match log_record.record_type {
@@ -71,7 +69,8 @@ impl Engine {
             let fid = self.active_file.id();
             let fresh = DataFile::new(dir_path, fid + 1)?;
             // swap out the currently full datafile, swap in a fresh one
-            self.older_file.insert(fid, std::mem::replace(&mut self.active_file, fresh));
+            self.older_file
+                .insert(fid, std::mem::replace(&mut self.active_file, fresh));
         }
 
         // append the log record to the fresh one

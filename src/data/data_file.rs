@@ -1,7 +1,7 @@
-use std::path::Path;
 use crate::data::log_record::LogRecord;
-use crate::fio;
 use crate::errors::Result;
+use crate::fio;
+use std::path::Path;
 
 pub struct DataFile {
     id: u32,

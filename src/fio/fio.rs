@@ -57,9 +57,9 @@ impl IOManager for FileIO {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-    use std::fs;
     use super::*;
+    use std::fs;
+    use std::path::PathBuf;
 
     fn tmp_file() -> PathBuf {
         let _ = fs::create_dir("tmp");
