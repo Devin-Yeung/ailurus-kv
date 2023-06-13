@@ -1,10 +1,13 @@
-use crate::data::data_file::DataFile;
+use crate::data::data_file::{DataFile, DATAFILE_SUFFIX, INITIAL_DATAFILE_ID};
 use crate::data::log_record::{LogRecord, LogRecordPos, LogRecordType};
 use crate::errors::Errors::IndexUpdateFail;
 use crate::errors::{Errors, Result};
 use crate::{index, options};
 use bytes::Bytes;
 use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
+use crate::index::indexer;
 
 pub struct Engine {
     options: options::Options,
@@ -14,6 +17,43 @@ pub struct Engine {
 }
 
 impl Engine {
+    pub fn new(opts: options::Options) -> Result<Self> {
+        // validate the configuration
+        options::check_options(&opts)?;
+
+        if opts.dir_path.is_dir() {
+            if let Err(_) = fs::create_dir_all(&opts.dir_path) {
+                // TODO: log the err
+                return Err(Errors::CreateDbDirFail);
+            }
+        }
+
+        // load the datafiles (including active and inactive)
+        let mut datafiles = load_datafiles(&opts.dir_path)?;
+        let index = indexer(datafiles.values(), &opts.index_type);
+
+        let active = match datafiles.len() {
+            0 => {
+                // Empty database, open a fresh new active datafile
+                DataFile::new(&opts.dir_path, INITIAL_DATAFILE_ID)?
+            }
+            _ => {
+                // the datafile with largest fid is the currently active datafile
+                let active_fid = datafiles.keys().max().unwrap().clone();
+                datafiles.remove(&active_fid).unwrap()
+            }
+        };
+
+        Ok(
+            Engine {
+                options: opts,
+                active_file: active,
+                older_file: datafiles,
+                index,
+            }
+        )
+    }
+
     pub fn put(&mut self, key: Bytes, value: Bytes) -> Result<()> {
         if key.is_empty() {
             return Err(Errors::EmptyKey);
@@ -86,4 +126,27 @@ impl Engine {
             offset: self.active_file.offset(),
         })
     }
+}
+
+fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
+    let dir = fs::read_dir(&path).map_err(|_| Errors::ReadDbDirFail)?;
+    let mut datafiles = HashMap::<u32, DataFile>::new();
+
+    for file in dir {
+        if let Ok(entry) = file {
+            let fname = entry.file_name();
+
+            if fname.to_str().unwrap().ends_with(DATAFILE_SUFFIX) {
+                // example datafile name: `00001.data`
+                let split: Vec<&str> = fname.to_str().unwrap().split(".").collect();
+                let fid = match split[0].parse::<u32>() {
+                    Ok(fid) => { fid }
+                    Err(_) => { return Err(Errors::DatafileCorrupted); }
+                };
+                datafiles.insert(fid, DataFile::new(&path, fid)?);
+            }
+        }
+    }
+
+    Ok(datafiles)
 }

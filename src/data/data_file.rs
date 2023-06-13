@@ -3,6 +3,9 @@ use crate::errors::Result;
 use crate::fio;
 use std::path::Path;
 
+pub const DATAFILE_SUFFIX: &str = ".data";
+pub const INITIAL_DATAFILE_ID: u32 = 0;
+
 pub struct DataFile {
     id: u32,
     offset: u64,

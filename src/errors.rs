@@ -16,8 +16,18 @@ pub enum Errors {
     KeyNotFound,
     #[error("Datafile not found in storage")]
     DatafileNotFound,
+    #[error("Datafile size is too small")]
+    DatafileSizeTooSmall,
+    #[error("Datafile has been Corrupted")]
+    DatafileCorrupted,
     #[error("Fail to update the memory index")]
     IndexUpdateFail,
+    #[error("Fail to create database directory")]
+    CreateDbDirFail,
+    #[error("Read to create database directory")]
+    ReadDbDirFail,
+    #[error("Path to database is invalid")]
+    InvalidDbPath,
 }
 
 pub type Result<T> = std::result::Result<T, Errors>;

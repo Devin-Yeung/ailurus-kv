@@ -3,6 +3,7 @@ use crate::index::Indexer;
 use parking_lot::RwLock;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+use crate::data::data_file::DataFile;
 
 pub struct BTree {
     /// A wrapper around a BTreeMap to provide concurrent access.
@@ -14,6 +15,15 @@ impl BTree {
         BTree {
             tree: Arc::new(RwLock::new(BTreeMap::new())),
         }
+    }
+}
+
+impl<'a, T> From<T> for BTree
+    where T: IntoIterator<Item=&'a DataFile>
+{
+    fn from(value: T) -> Self {
+        // return a btree index using the given Datafile
+        todo!()
     }
 }
 
