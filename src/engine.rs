@@ -2,12 +2,12 @@ use crate::data::data_file::{DataFile, DATAFILE_SUFFIX, INITIAL_DATAFILE_ID};
 use crate::data::log_record::{LogRecord, LogRecordPos, LogRecordType};
 use crate::errors::Errors::IndexUpdateFail;
 use crate::errors::{Errors, Result};
+use crate::index::indexer;
 use crate::{index, options};
 use bytes::Bytes;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use crate::index::indexer;
 
 pub struct Engine {
     options: options::Options,
@@ -44,14 +44,12 @@ impl Engine {
             }
         };
 
-        Ok(
-            Engine {
-                options: opts,
-                active_file: active,
-                older_file: datafiles,
-                index,
-            }
-        )
+        Ok(Engine {
+            options: opts,
+            active_file: active,
+            older_file: datafiles,
+            index,
+        })
     }
 
     pub fn put(&mut self, key: Bytes, value: Bytes) -> Result<()> {
@@ -140,8 +138,10 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
                 // example datafile name: `00001.data`
                 let split: Vec<&str> = fname.to_str().unwrap().split(".").collect();
                 let fid = match split[0].parse::<u32>() {
-                    Ok(fid) => { fid }
-                    Err(_) => { return Err(Errors::DatafileCorrupted); }
+                    Ok(fid) => fid,
+                    Err(_) => {
+                        return Err(Errors::DatafileCorrupted);
+                    }
                 };
                 datafiles.insert(fid, DataFile::new(&path, fid)?);
             }

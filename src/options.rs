@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use crate::errors::{Errors, Result};
+use std::path::PathBuf;
 
 #[non_exhaustive]
 pub enum IndexType {

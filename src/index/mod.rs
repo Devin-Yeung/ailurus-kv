@@ -42,12 +42,11 @@ pub trait Indexer {
 }
 
 pub fn indexer<'a, D>(datafiles: D, index_type: &IndexType) -> Box<dyn Indexer>
-    where D: IntoIterator<Item=&'a DataFile>
+where
+    D: IntoIterator<Item = &'a DataFile>,
 {
     return match index_type {
-        IndexType::BTree => {
-            Box::new(BTree::from(datafiles))
-        }
+        IndexType::BTree => Box::new(BTree::from(datafiles)),
         IndexType::SkipList => todo!(),
     };
 }

@@ -1,9 +1,9 @@
+use crate::data::data_file::DataFile;
 use crate::data::log_record::LogRecordPos;
 use crate::index::Indexer;
 use parking_lot::RwLock;
 use std::collections::BTreeMap;
 use std::sync::Arc;
-use crate::data::data_file::DataFile;
 
 pub struct BTree {
     /// A wrapper around a BTreeMap to provide concurrent access.
@@ -19,7 +19,8 @@ impl BTree {
 }
 
 impl<'a, T> From<T> for BTree
-    where T: IntoIterator<Item=&'a DataFile>
+where
+    T: IntoIterator<Item = &'a DataFile>,
 {
     fn from(value: T) -> Self {
         // return a btree index using the given Datafile
@@ -56,15 +57,15 @@ mod tests {
             "".as_bytes().to_vec(),
             LogRecordPos {
                 file_id: 42,
-                offset: 42
-            }
+                offset: 42,
+            },
         ));
         assert!(b.put(
             "".as_bytes().to_vec(),
             LogRecordPos {
                 file_id: 1024,
-                offset: 1024
-            }
+                offset: 1024,
+            },
         ));
     }
 
@@ -75,22 +76,22 @@ mod tests {
             "42".as_bytes().to_vec(),
             LogRecordPos {
                 file_id: 42,
-                offset: 42
-            }
+                offset: 42,
+            },
         ));
         assert!(b.put(
             "1024".as_bytes().to_vec(),
             LogRecordPos {
                 file_id: 1024,
-                offset: 1024
-            }
+                offset: 1024,
+            },
         ));
 
         assert_eq!(
             b.get("42".as_bytes().to_vec()).unwrap(),
             LogRecordPos {
                 file_id: 42,
-                offset: 42
+                offset: 42,
             }
         );
 
@@ -98,7 +99,7 @@ mod tests {
             b.get("1024".as_bytes().to_vec()).unwrap(),
             LogRecordPos {
                 file_id: 1024,
-                offset: 1024
+                offset: 1024,
             }
         );
 
@@ -112,15 +113,15 @@ mod tests {
             "42".as_bytes().to_vec(),
             LogRecordPos {
                 file_id: 42,
-                offset: 42
-            }
+                offset: 42,
+            },
         ));
         assert!(b.put(
             "1024".as_bytes().to_vec(),
             LogRecordPos {
                 file_id: 1024,
-                offset: 1024
-            }
+                offset: 1024,
+            },
         ));
 
         b.delete("42".as_bytes().to_vec());
@@ -130,7 +131,7 @@ mod tests {
             b.get("1024".as_bytes().to_vec()).unwrap(),
             LogRecordPos {
                 file_id: 1024,
-                offset: 1024
+                offset: 1024,
             }
         );
 
