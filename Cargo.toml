@@ -8,5 +8,6 @@ edition = "2021"
 [dependencies]
 bytes = "1.4.0"
 parking_lot = "0.12.1"
+prost = "0.11.9"
 tempfile = "3.6.0"
 thiserror = "1.0.40"
