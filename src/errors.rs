@@ -28,6 +28,8 @@ pub enum Errors {
     ReadDbDirFail,
     #[error("Path to database is invalid")]
     InvalidDbPath,
+    #[error("Something unexpected happen")]
+    InternalError,
 }
 
 pub type Result<T> = std::result::Result<T, Errors>;

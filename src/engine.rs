@@ -75,6 +75,7 @@ impl Engine {
             return Err(Errors::EmptyKey);
         }
 
+        // Check the existence of the key
         let pos = match self.index.get(key.to_vec()) {
             None => return Err(Errors::KeyNotFound),
             Some(x) => x,
@@ -88,9 +89,16 @@ impl Engine {
             },
         };
 
-        return match log_record.record_type {
-            LogRecordType::Normal => Ok(log_record.into()),
-            LogRecordType::Deleted => Err(Errors::KeyNotFound), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
+        return match log_record {
+            // already check the existence of key, if we go a `None` from datafile (indicate an EOF),
+            // it means datafiles must have been destroyed or something unexpected happened
+            None => Err(Errors::InternalError),
+            Some(record) => {
+                match record.record_type {
+                    LogRecordType::Normal => Ok(record.into()),
+                    LogRecordType::Deleted => Err(Errors::KeyNotFound), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
+                }
+            }
         };
     }
 

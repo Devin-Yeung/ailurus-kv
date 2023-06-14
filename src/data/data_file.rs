@@ -33,7 +33,8 @@ impl DataFile {
         todo!()
     }
 
-    pub fn read(&self, offset: u64) -> Result<LogRecord> {
+    pub fn read(&self, offset: u64) -> Result<Option<LogRecord>> {
+        // TODO: design decision, return Err(EOF) or Ok(None) when EOF reached
         todo!()
     }
 }
