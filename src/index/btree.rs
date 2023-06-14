@@ -1,6 +1,7 @@
 use crate::data::data_file::DataFile;
-use crate::data::log_record::LogRecordPos;
-use crate::index::Indexer;
+use crate::data::log_record::{LogRecordPos, LogRecordType};
+use crate::errors::Result;
+use crate::index::{Indexable, Indexer};
 use parking_lot::RwLock;
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -18,13 +19,36 @@ impl BTree {
     }
 }
 
-impl<'a, T> From<T> for BTree
-where
-    T: IntoIterator<Item = &'a DataFile>,
-{
-    fn from(value: T) -> Self {
+impl Indexable for BTree {
+    fn index<'a, D>(datafiles: D) -> Result<Box<dyn Indexer>>
+    where
+        D: IntoIterator<Item = &'a DataFile>,
+        Self: Sized,
+    {
         // return a btree index using the given Datafile
-        todo!()
+        let mut index = BTree::new();
+        for datafile in datafiles {
+            let mut offset = 0;
+            loop {
+                let log_record = match datafile.read(offset)? {
+                    None => break,
+                    Some(record) => record,
+                };
+
+                let pos = LogRecordPos {
+                    file_id: datafile.id(),
+                    offset,
+                };
+
+                match log_record.record_type {
+                    LogRecordType::Normal => index.put(log_record.key.to_vec(), pos),
+                    LogRecordType::Deleted => index.delete(log_record.key.to_vec()),
+                };
+
+                offset += log_record.size(); // TODO: [perf]: size() call is costly
+            }
+        }
+        return Ok(Box::new(index));
     }
 }
 

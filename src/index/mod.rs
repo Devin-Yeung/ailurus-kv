@@ -1,6 +1,7 @@
 mod btree;
 use crate::data::data_file::DataFile;
 use crate::data::log_record::LogRecordPos;
+use crate::errors::Result;
 use crate::index::btree::BTree;
 use crate::options::IndexType;
 
@@ -41,12 +42,19 @@ pub trait Indexer {
     fn delete(&mut self, key: Vec<u8>) -> bool;
 }
 
-pub fn indexer<'a, D>(datafiles: D, index_type: &IndexType) -> Box<dyn Indexer>
+pub trait Indexable {
+    fn index<'a, D>(datafiles: D) -> Result<Box<dyn Indexer>>
+    where
+        D: IntoIterator<Item = &'a DataFile>,
+        Self: Sized;
+}
+
+pub fn indexer<'a, D>(datafiles: D, index_type: &IndexType) -> Result<Box<dyn Indexer>>
 where
     D: IntoIterator<Item = &'a DataFile>,
 {
     return match index_type {
-        IndexType::BTree => Box::new(BTree::from(datafiles)),
+        IndexType::BTree => Ok(BTree::index(datafiles)?),
         IndexType::SkipList => todo!(),
     };
 }

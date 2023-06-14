@@ -30,7 +30,7 @@ impl Engine {
 
         // load the datafiles (including active and inactive)
         let mut datafiles = load_datafiles(&opts.dir_path)?;
-        let index = indexer(datafiles.values(), &opts.index_type);
+        let index = indexer(datafiles.values(), &opts.index_type)?;
 
         let active = match datafiles.len() {
             0 => {

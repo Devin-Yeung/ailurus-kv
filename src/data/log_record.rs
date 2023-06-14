@@ -37,4 +37,13 @@ impl LogRecord {
     pub fn encode(&self) -> Vec<u8> {
         unimplemented!()
     }
+
+    /// Return the size of the `LogRecord`
+    ///
+    /// # Notes
+    ///
+    /// The time complexity of the call does *not* guarantee O(1) due to the implementation
+    pub fn size(&self) -> u64 {
+        todo!()
+    }
 }
