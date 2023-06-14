@@ -1,7 +1,9 @@
 use crate::data::log_record::LogRecord;
-use crate::errors::Result;
+use crate::errors::{Errors, Result};
 use crate::fio;
 use std::path::Path;
+use bytes::{Buf, Bytes, BytesMut};
+use crate::fio::io_manager;
 
 pub const DATAFILE_SUFFIX: &str = ".data";
 pub const INITIAL_DATAFILE_ID: u32 = 0;
@@ -14,7 +16,35 @@ pub struct DataFile {
 
 impl DataFile {
     pub fn new<P: AsRef<Path>>(path: P, id: u32) -> Result<DataFile> {
-        todo!()
+        let mut fname = path.as_ref().to_path_buf();
+        let fname = match fname.is_dir() {
+            true => {
+                let datafile = std::format!("{:09}{}", id, DATAFILE_SUFFIX);
+                fname.join(datafile)
+            }
+            false => return Err(Errors::DatafileNotFound)
+        };
+
+        let offset = match std::fs::File::open(fname) {
+            Ok(f) => {
+                // TODO: docs didn't tell me what's the possible error, let me unwrap it
+                f.metadata().unwrap().len()
+            }
+            Err(_) => {
+                // TODO: log the error
+                return Err(Errors::FailToOpenFile);
+            }
+        };
+
+        let io_manager = Box::new(io_manager(path)?);
+
+        Ok(
+            DataFile {
+                id,
+                offset,
+                io_manager,
+            }
+        )
     }
 
     pub fn offset(&self) -> u64 {

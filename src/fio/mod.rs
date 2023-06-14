@@ -1,6 +1,8 @@
 mod fio;
 
+use std::path::Path;
 use crate::errors::Result;
+use crate::fio::fio::FileIO;
 
 pub trait IOManager: Send + Sync {
     /// Reads data from the underlying storage into the provided buffer.
@@ -38,4 +40,8 @@ pub trait IOManager: Send + Sync {
     /// is successful, it returns `Ok(())`. If an error occurs during the synchronization, it returns `Err(error)`
     /// with an associated error value.
     fn sync(&self) -> Result<()>;
+}
+
+pub fn io_manager<P: AsRef<Path>>(path: P) -> Result<impl IOManager> {
+    FileIO::new(path)
 }
