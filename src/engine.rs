@@ -70,6 +70,31 @@ impl Engine {
         }
     }
 
+    pub fn delete(&mut self, key: Bytes) -> Result<()> {
+        if key.is_empty() {
+            return Err(Errors::EmptyKey);
+        }
+
+        match self.index.get(key.to_vec()) {
+            None => return Ok(()), // TODO: design decision, Err or Ok ?
+            _ => {}
+        };
+
+        let record = LogRecord {
+            key: key.to_vec(),
+            value: Default::default(), // value can be anything
+            record_type: LogRecordType::Deleted,
+        };
+
+        self.append_log_record(record)?;
+
+        // update index
+        if !self.index.delete(key.to_vec()) {
+            return Err(IndexUpdateFail);
+        }
+        Ok(())
+    }
+
     pub fn get(&self, key: Bytes) -> Result<Bytes> {
         if key.is_empty() {
             return Err(Errors::EmptyKey);
