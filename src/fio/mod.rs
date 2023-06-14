@@ -42,6 +42,6 @@ pub trait IOManager: Send + Sync {
     fn sync(&self) -> Result<()>;
 }
 
-pub fn io_manager<P: AsRef<Path>>(path: P) -> Result<impl IOManager> {
+pub fn io_manager<'a, 'b, P: AsRef<Path> + 'a>(path: P) -> Result<impl IOManager + 'b> {
     FileIO::new(path)
 }
