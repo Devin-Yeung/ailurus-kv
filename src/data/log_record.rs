@@ -1,3 +1,4 @@
+use crate::errors::{Errors, Result};
 use bytes::Bytes;
 
 #[non_exhaustive]
@@ -10,6 +11,18 @@ pub struct LogRecord {
     pub(crate) key: Vec<u8>,
     pub(crate) value: Vec<u8>,
     pub(crate) record_type: LogRecordType,
+}
+
+impl TryFrom<u8> for LogRecordType {
+    type Error = Errors;
+
+    fn try_from(value: u8) -> std::result::Result<Self, Self::Error> {
+        return match value {
+            1 => Ok(LogRecordType::Normal),
+            2 => Ok(LogRecordType::Deleted),
+            _ => Err(Errors::DatafileCorrupted),
+        };
+    }
 }
 
 impl Into<Bytes> for LogRecord {
@@ -44,6 +57,10 @@ impl LogRecord {
     ///
     /// The time complexity of the call does *not* guarantee O(1) due to the implementation
     pub fn size(&self) -> u64 {
+        todo!()
+    }
+
+    pub fn crc(&self) -> u32 {
         todo!()
     }
 }
