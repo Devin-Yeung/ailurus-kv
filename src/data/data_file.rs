@@ -3,6 +3,7 @@ use crate::errors::{Errors, Result};
 use crate::fio;
 use crate::fio::io_manager;
 use bytes::{Buf, Bytes, BytesMut};
+use log::error;
 use prost::{decode_length_delimiter, length_delimiter_len};
 use std::path::Path;
 
@@ -27,12 +28,15 @@ impl DataFile {
         };
 
         let offset = match std::fs::File::open(fname) {
-            Ok(f) => {
-                // TODO: docs didn't tell me what's the possible error, let me unwrap it
-                f.metadata().unwrap().len()
-            }
-            Err(_) => {
-                // TODO: log the error
+            Ok(f) => f
+                .metadata()
+                .map_err(|e| {
+                    error!("{}", e);
+                    Errors::InternalError
+                })?
+                .len(),
+            Err(e) => {
+                error!("{}", e);
                 return Err(Errors::FailToOpenFile);
             }
         };
@@ -110,7 +114,7 @@ impl DataFile {
         };
 
         if crc != log_record.crc() {
-            // TODO: log
+            error!("CRC does not match");
             return Err(Errors::DatafileCorrupted);
         }
 

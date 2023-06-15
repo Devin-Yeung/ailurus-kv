@@ -1,5 +1,6 @@
 use crate::errors::{Errors, Result};
 use crate::fio::IOManager;
+use log::error;
 use parking_lot::RwLock;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
@@ -34,7 +35,10 @@ impl IOManager for FileIO {
         let reader = self.fd.read();
         return match reader.read_at(buf, offset) {
             Ok(n) => Ok(n),
-            Err(_) => Err(Errors::FailToReadFromFile),
+            Err(e) => {
+                error!("{}", e);
+                Err(Errors::FailToReadFromFile)
+            }
         };
     }
 
@@ -42,13 +46,17 @@ impl IOManager for FileIO {
         let mut writer = self.fd.write();
         return match writer.write(buf) {
             Ok(n) => Ok(n),
-            Err(_) => Err(Errors::FailToWriteToFile),
+            Err(e) => {
+                error!("{}", e);
+                Err(Errors::FailToWriteToFile)
+            }
         };
     }
 
     fn sync(&self) -> Result<()> {
         let reader = self.fd.read();
-        if let Err(_) = reader.sync_all() {
+        if let Err(e) = reader.sync_all() {
+            error!("{}", e);
             return Err(Errors::FailToSyncFile);
         }
         Ok(())

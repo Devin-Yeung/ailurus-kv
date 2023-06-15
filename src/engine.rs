@@ -5,6 +5,7 @@ use crate::errors::{Errors, Result};
 use crate::index::indexer;
 use crate::{index, options};
 use bytes::Bytes;
+use log::error;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -22,8 +23,8 @@ impl Engine {
         options::check_options(&opts)?;
 
         if opts.dir_path.is_dir() {
-            if let Err(_) = fs::create_dir_all(&opts.dir_path) {
-                // TODO: log the err
+            if let Err(e) = fs::create_dir_all(&opts.dir_path) {
+                error!("{}", e);
                 return Err(Errors::CreateDbDirFail);
             }
         }
@@ -172,7 +173,8 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
                 let split: Vec<&str> = fname.to_str().unwrap().split(".").collect();
                 let fid = match split[0].parse::<u32>() {
                     Ok(fid) => fid,
-                    Err(_) => {
+                    Err(e) => {
+                        error!("{}", e);
                         return Err(Errors::DatafileCorrupted);
                     }
                 };
