@@ -1,8 +1,8 @@
 mod fio;
 
-use std::path::Path;
 use crate::errors::Result;
 use crate::fio::fio::FileIO;
+use std::path::Path;
 
 pub trait IOManager: Send + Sync {
     /// Reads data from the underlying storage into the provided buffer.

@@ -1,10 +1,10 @@
 use crate::data::log_record::{LogRecord, LogRecordType};
 use crate::errors::{Errors, Result};
 use crate::fio;
-use std::path::Path;
+use crate::fio::io_manager;
 use bytes::{Buf, Bytes, BytesMut};
 use prost::{decode_length_delimiter, length_delimiter_len};
-use crate::fio::io_manager;
+use std::path::Path;
 
 pub const DATAFILE_SUFFIX: &str = ".data";
 pub const INITIAL_DATAFILE_ID: u32 = 0;
@@ -23,7 +23,7 @@ impl DataFile {
                 let datafile = std::format!("{:09}{}", id, DATAFILE_SUFFIX);
                 fname.join(datafile)
             }
-            false => return Err(Errors::DatafileNotFound)
+            false => return Err(Errors::DatafileNotFound),
         };
 
         let offset = match std::fs::File::open(fname) {
@@ -39,13 +39,11 @@ impl DataFile {
 
         let io_manager = Box::new(io_manager(path)?);
 
-        Ok(
-            DataFile {
-                id,
-                offset,
-                io_manager,
-            }
-        )
+        Ok(DataFile {
+            id,
+            offset,
+            io_manager,
+        })
     }
 
     pub fn offset(&self) -> u64 {
@@ -77,7 +75,7 @@ impl DataFile {
         let mut header = BytesMut::zeroed(
             std::mem::size_of::<u32>() /* size of CRC */
                 + std::mem::size_of::<u8>() /* size of Type */
-                + length_delimiter_len(u32::MAX as usize) * 2 /* variable key size and value size */
+                + length_delimiter_len(u32::MAX as usize) * 2, /* variable key size and value size */
         );
 
         self.io_manager.read(&mut header, offset)?;
@@ -86,8 +84,10 @@ impl DataFile {
         let record_type = header.get_u8();
 
         // bytes will advance automatically
-        let key_size = decode_length_delimiter(&mut header).map_err(|_| Errors::DatafileCorrupted)?;
-        let value_size = decode_length_delimiter(&mut header).map_err(|_| Errors::DatafileCorrupted)?;
+        let key_size =
+            decode_length_delimiter(&mut header).map_err(|_| Errors::DatafileCorrupted)?;
+        let value_size =
+            decode_length_delimiter(&mut header).map_err(|_| Errors::DatafileCorrupted)?;
 
         // EOF reached
         if key_size == 0 && value_size == 0 {
@@ -100,7 +100,8 @@ impl DataFile {
             + length_delimiter_len(value_size) /* length of key size */;
 
         let mut kv_buf = BytesMut::zeroed(key_size + value_size);
-        self.io_manager.read(&mut kv_buf, offset + header_size as u64)?;
+        self.io_manager
+            .read(&mut kv_buf, offset + header_size as u64)?;
 
         let mut log_record = LogRecord {
             key: kv_buf.get(..key_size).unwrap().to_vec(),
