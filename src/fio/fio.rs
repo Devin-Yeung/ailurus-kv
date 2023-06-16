@@ -31,15 +31,12 @@ impl FileIO {
 }
 
 impl IOManager for FileIO {
-    fn read(&self, buf: &mut [u8], offset: u64) -> Result<usize> {
+    fn read(&self, buf: &mut [u8], offset: u64) -> Result<()> {
         let reader = self.fd.read();
-        return match reader.read_at(buf, offset) {
-            Ok(n) => Ok(n),
-            Err(e) => {
-                error!("{}", e);
-                Err(Errors::FailToReadFromFile)
-            }
-        };
+        reader.read_exact_at(buf, offset).map_err(|e| {
+            error!("{}", e);
+            return Errors::FailToReadFromFile;
+        })
     }
 
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
@@ -88,7 +85,7 @@ mod tests {
 
         let mut buf = vec![0; data.len()];
         let result = file.read(&mut buf, 0);
-        assert_eq!(result, Ok(data.len()));
+        assert_eq!(result, Ok(()));
         assert_eq!(buf, data);
 
         fs::remove_file(&file_path).unwrap();

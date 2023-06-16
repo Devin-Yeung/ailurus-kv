@@ -6,6 +6,7 @@ use std::path::Path;
 
 pub trait IOManager: Send + Sync {
     /// Reads data from the underlying storage into the provided buffer.
+    /// This function reads as many bytes as necessary to *completely fill* the specified buffer buf.
     ///
     /// # Arguments
     ///
@@ -15,9 +16,9 @@ pub trait IOManager: Send + Sync {
     /// # Returns
     ///
     /// Returns a `Result` indicating the result of the read operation. If the read is successful,
-    /// it returns `Ok(bytes_read)` where `bytes_read` is the number of bytes read into the buffer.
+    /// it returns `Ok(())` if all the bytes fulfill the buffer.
     /// If an error occurs during the read operation, it returns `Err(error)` with an associated error value.
-    fn read(&self, buf: &mut [u8], offset: u64) -> Result<usize>;
+    fn read(&self, buf: &mut [u8], offset: u64) -> Result<()>;
 
     /// Writes data from the provided buffer to the underlying storage.
     ///
