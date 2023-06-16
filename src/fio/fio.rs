@@ -25,7 +25,10 @@ impl FileIO {
             Ok(file) => Ok(FileIO {
                 fd: Arc::new(RwLock::new(file)),
             }),
-            Err(_e) => Err(Errors::FailToOpenFile),
+            Err(e) => {
+                error!("{}", e);
+                Err(Errors::FailToOpenFile)
+            }
         };
     }
 }
