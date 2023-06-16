@@ -1,4 +1,4 @@
-use crate::errors::{Errors};
+use crate::errors::Errors;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use prost::encode_length_delimiter;
 
@@ -126,7 +126,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn simple_compression() {
+    fn simple_record_compression() {
         let record = LogRecord {
             key: "ailurus-kv".as_bytes().to_vec(), // 10 bytes
             value: "is Awesome".as_bytes().to_vec(),
@@ -165,7 +165,7 @@ mod tests {
     }
 
     #[test]
-    fn simple_record() {
+    fn simple_record_encoding() {
         let record = LogRecord {
             key: "ailurus-kv".as_bytes().to_vec(), // 10 bytes
             value: "is Awesome".as_bytes().to_vec(),
