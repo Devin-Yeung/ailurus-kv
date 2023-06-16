@@ -36,12 +36,6 @@ impl Into<u8> for LogRecordType {
     }
 }
 
-impl Into<Bytes> for LogRecord {
-    fn into(self) -> Bytes {
-        todo!()
-    }
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct LogRecordPos {
     /// The ID of the log file where the record is located.

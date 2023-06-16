@@ -121,7 +121,7 @@ impl Engine {
             None => Err(Errors::InternalError),
             Some(record) => {
                 match record.record_type {
-                    LogRecordType::Normal => Ok(record.into()),
+                    LogRecordType::Normal => Ok(record.value.into()),
                     LogRecordType::Deleted => Err(Errors::KeyNotFound), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
                 }
             }
