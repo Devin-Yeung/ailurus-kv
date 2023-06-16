@@ -18,7 +18,7 @@ pub struct DataFile {
 
 impl DataFile {
     pub fn new<P: AsRef<Path>>(path: P, id: u32) -> Result<DataFile> {
-        let mut fname = path.as_ref().to_path_buf();
+        let fname = path.as_ref().to_path_buf();
         let fname = match fname.is_dir() {
             true => {
                 let datafile = std::format!("{:09}{}", id, DATAFILE_SUFFIX);
@@ -27,7 +27,7 @@ impl DataFile {
             false => return Err(Errors::DatafileNotFound),
         };
 
-        let offset = match std::fs::File::open(fname) {
+        let offset = match std::fs::File::open(&fname) {
             Ok(f) => f
                 .metadata()
                 .map_err(|e| {
@@ -41,7 +41,7 @@ impl DataFile {
             }
         };
 
-        let io_manager = Box::new(io_manager(path)?);
+        let io_manager = Box::new(io_manager(fname)?);
 
         Ok(DataFile {
             id,
@@ -107,7 +107,7 @@ impl DataFile {
         self.io_manager
             .read(&mut kv_buf, offset + header_size as u64)?;
 
-        let mut log_record = LogRecord {
+        let log_record = LogRecord {
             key: kv_buf.get(..key_size).unwrap().to_vec(),
             value: kv_buf.get(key_size..kv_buf.len()).unwrap().to_vec(),
             record_type: record_type.try_into()?,
