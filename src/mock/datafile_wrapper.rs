@@ -66,7 +66,6 @@ mod tests {
 
     #[test]
     fn create() {
-        env_logger::init();
         let df = DataFileWrapper::default();
         let path = df.path.to_owned();
         assert!(path.is_file());
