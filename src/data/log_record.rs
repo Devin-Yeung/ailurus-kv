@@ -147,6 +147,24 @@ mod tests {
     }
 
     #[test]
+    fn empty_record_compression() {
+        let record = LogRecord {
+            key: vec![], // 10 bytes
+            value: vec![],
+            record_type: LogRecordType::Normal,
+        };
+
+        let expected = [
+            1 as u8, /* record type */
+            0 as u8, /* key size is 0B */
+            0 as u8, /* value size is 0B */
+                     /* key and value is empty */
+        ];
+
+        assert_eq!(record.compress()[..], expected);
+    }
+
+    #[test]
     fn simple_record() {
         let record = LogRecord {
             key: "ailurus-kv".as_bytes().to_vec(), // 10 bytes
