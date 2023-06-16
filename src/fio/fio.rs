@@ -38,7 +38,7 @@ impl IOManager for FileIO {
         let reader = self.fd.read();
         reader.read_exact_at(buf, offset).map_err(|e| {
             error!("{}", e);
-            return Errors::FailToReadFromFile;
+            Errors::FailToReadFromFile
         })
     }
 

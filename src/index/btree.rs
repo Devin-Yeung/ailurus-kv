@@ -48,7 +48,7 @@ impl Indexable for BTree {
                 offset += log_record.size(); // TODO: [perf]: size() call is costly
             }
         }
-        return Ok(Box::new(index));
+        Ok(Box::new(index))
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::errors::Errors;
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+use bytes::{Buf, BufMut, BytesMut};
 use prost::encode_length_delimiter;
 
 #[non_exhaustive]
@@ -19,20 +19,20 @@ impl TryFrom<u8> for LogRecordType {
     type Error = Errors;
 
     fn try_from(value: u8) -> std::result::Result<Self, Self::Error> {
-        return match value {
+        match value {
             1 => Ok(LogRecordType::Normal),
             2 => Ok(LogRecordType::Deleted),
             _ => Err(Errors::DatafileCorrupted),
-        };
+        }
     }
 }
 
-impl Into<u8> for LogRecordType {
-    fn into(self) -> u8 {
-        return match self {
+impl From<LogRecordType> for u8 {
+    fn from(value: LogRecordType) -> Self {
+        match value {
             LogRecordType::Normal => 1,
             LogRecordType::Deleted => 2,
-        };
+        }
     }
 }
 
@@ -128,13 +128,13 @@ mod tests {
         };
 
         let expected = [
-            1 as u8,  /* record type */
-            10 as u8, /* key size is 10B */
-            10 as u8, /* value size is 10B */
-            'a' as u8, 'i' as u8, 'l' as u8, 'u' as u8, 'r' as u8, 'u' as u8, 's' as u8, '-' as u8,
-            'k' as u8, 'v' as u8, /* key:   ailurus-kv */
-            'i' as u8, 's' as u8, ' ' as u8, 'A' as u8, 'w' as u8, 'e' as u8, 's' as u8, 'o' as u8,
-            'm' as u8, 'e' as u8, /* value: is Awesome */
+            1_u8,  /* record type */
+            10_u8, /* key size is 10B */
+            10_u8, /* value size is 10B */
+            b'a', b'i', b'l', b'u', b'r', b'u', b's', b'-', b'k',
+            b'v', /* key:   ailurus-kv */
+            b'i', b's', b' ', b'A', b'w', b'e', b's', b'o', b'm',
+            b'e', /* value: is Awesome */
         ];
 
         assert_eq!(record.compress()[..], expected);
@@ -149,10 +149,10 @@ mod tests {
         };
 
         let expected = [
-            1 as u8, /* record type */
-            0 as u8, /* key size is 0B */
-            0 as u8, /* value size is 0B */
-                     /* key and value is empty */
+            1_u8, /* record type */
+            0_u8, /* key size is 0B */
+            0_u8, /* value size is 0B */
+                  /* key and value is empty */
         ];
 
         assert_eq!(record.compress()[..], expected);
@@ -167,14 +167,14 @@ mod tests {
         };
 
         let expected = [
-            0x04, 0xcd, 0x63, 0xdd,     /* Manually calculated CRC */
-            1 as u8,  /* record type */
-            10 as u8, /* key size is 10B */
-            10 as u8, /* value size is 10B */
-            'a' as u8, 'i' as u8, 'l' as u8, 'u' as u8, 'r' as u8, 'u' as u8, 's' as u8, '-' as u8,
-            'k' as u8, 'v' as u8, /* key:   ailurus-kv */
-            'i' as u8, 's' as u8, ' ' as u8, 'A' as u8, 'w' as u8, 'e' as u8, 's' as u8, 'o' as u8,
-            'm' as u8, 'e' as u8, /* value: is Awesome */
+            0x04, 0xcd, 0x63, 0xdd,  /* Manually calculated CRC */
+            1_u8,  /* record type */
+            10_u8, /* key size is 10B */
+            10_u8, /* value size is 10B */
+            b'a', b'i', b'l', b'u', b'r', b'u', b's', b'-', b'k',
+            b'v', /* key:   ailurus-kv */
+            b'i', b's', b' ', b'A', b'w', b'e', b's', b'o', b'm',
+            b'e', /* value: is Awesome */
         ];
 
         assert_eq!(record.encode()[..], expected);
@@ -188,6 +188,6 @@ mod tests {
             record_type: LogRecordType::Normal,
         };
 
-        assert_eq!(record.crc(), 0x04cd63dd as u32);
+        assert_eq!(record.crc(), 0x04cd63dd_u32);
     }
 }

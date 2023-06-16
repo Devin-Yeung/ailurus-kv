@@ -1,8 +1,8 @@
-use crate::data::log_record::{LogRecord, LogRecordType};
+use crate::data::log_record::LogRecord;
 use crate::errors::{Errors, Result};
 use crate::fio;
 use crate::fio::io_manager;
-use bytes::{Buf, Bytes, BytesMut};
+use bytes::{Buf, BytesMut};
 use log::error;
 use prost::{decode_length_delimiter, length_delimiter_len};
 use std::path::Path;

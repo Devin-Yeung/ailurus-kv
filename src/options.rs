@@ -23,7 +23,7 @@ pub(crate) fn check_options(opts: &Options) -> Result<()> {
         return Err(Errors::InvalidDbPath);
     }
 
-    if opts.data_file_size <= 0 {
+    if opts.data_file_size == 0 {
         return Err(Errors::DatafileSizeTooSmall);
     }
 

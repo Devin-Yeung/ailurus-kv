@@ -28,7 +28,7 @@ impl DataFileWrapper {
             .unwrap()
             .sync_all();
 
-        let datafile = DataFile::new(&path.parent().unwrap(), id).unwrap();
+        let datafile = DataFile::new(path.parent().unwrap(), id).unwrap();
 
         DataFileWrapper { datafile, path }
     }
@@ -50,13 +50,13 @@ impl Deref for DataFileWrapper {
     type Target = DataFile;
 
     fn deref(&self) -> &Self::Target {
-        return &self.datafile;
+        &self.datafile
     }
 }
 
 impl DerefMut for DataFileWrapper {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        return &mut self.datafile;
+        &mut self.datafile
     }
 }
 

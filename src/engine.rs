@@ -40,7 +40,7 @@ impl Engine {
             }
             _ => {
                 // the datafile with largest fid is the currently active datafile
-                let active_fid = datafiles.keys().max().unwrap().clone();
+                let active_fid = *datafiles.keys().max().unwrap();
                 datafiles.remove(&active_fid).unwrap()
             }
         };
@@ -76,9 +76,8 @@ impl Engine {
             return Err(Errors::EmptyKey);
         }
 
-        match self.index.get(key.to_vec()) {
-            None => return Ok(()), // TODO: design decision, Err or Ok ?
-            _ => {}
+        if self.index.get(key.to_vec()).is_none() {
+            return Ok(());
         };
 
         let record = LogRecord {
@@ -115,7 +114,7 @@ impl Engine {
             },
         };
 
-        return match log_record {
+        match log_record {
             // already check the existence of key, if we go a `None` from datafile (indicate an EOF),
             // it means datafiles must have been destroyed or something unexpected happened
             None => Err(Errors::InternalError),
@@ -125,7 +124,7 @@ impl Engine {
                     LogRecordType::Deleted => Err(Errors::KeyNotFound), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
                 }
             }
-        };
+        }
     }
 
     fn append_log_record(&mut self, record: LogRecord) -> Result<LogRecordPos> {
@@ -164,22 +163,20 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
     let dir = fs::read_dir(&path).map_err(|_| Errors::ReadDbDirFail)?;
     let mut datafiles = HashMap::<u32, DataFile>::new();
 
-    for file in dir {
-        if let Ok(entry) = file {
-            let fname = entry.file_name();
+    for entry in dir.flatten() {
+        let fname = entry.file_name();
 
-            if fname.to_str().unwrap().ends_with(DATAFILE_SUFFIX) {
-                // example datafile name: `00001.data`
-                let split: Vec<&str> = fname.to_str().unwrap().split(".").collect();
-                let fid = match split[0].parse::<u32>() {
-                    Ok(fid) => fid,
-                    Err(e) => {
-                        error!("{}", e);
-                        return Err(Errors::DatafileCorrupted);
-                    }
-                };
-                datafiles.insert(fid, DataFile::new(&path, fid)?);
-            }
+        if fname.to_str().unwrap().ends_with(DATAFILE_SUFFIX) {
+            // example datafile name: `00001.data`
+            let split: Vec<&str> = fname.to_str().unwrap().split('.').collect();
+            let fid = match split[0].parse::<u32>() {
+                Ok(fid) => fid,
+                Err(e) => {
+                    error!("{}", e);
+                    return Err(Errors::DatafileCorrupted);
+                }
+            };
+            datafiles.insert(fid, DataFile::new(&path, fid)?);
         }
     }
 
