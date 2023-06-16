@@ -121,3 +121,21 @@ impl DataFile {
         Ok(Some(log_record))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::data::log_record::{LogRecord, LogRecordType};
+    use crate::mock::datafile_wrapper::DataFileWrapper;
+
+    #[test]
+    fn get_one_key() {
+        let mut df = DataFileWrapper::default();
+        let record = LogRecord {
+            key: "ailurus-kv".as_bytes().to_vec(),
+            value: "is Awesome".as_bytes().to_vec(),
+            record_type: LogRecordType::Normal,
+        };
+        df.write(&record.encode()).unwrap();
+        assert_eq!(df.read(0).unwrap().unwrap(), record);
+    }
+}

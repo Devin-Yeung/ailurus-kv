@@ -3,12 +3,13 @@ use bytes::{Buf, BufMut, BytesMut};
 use prost::encode_length_delimiter;
 
 #[non_exhaustive]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum LogRecordType {
     Normal,
     Deleted,
 }
 
+#[derive(Eq, PartialEq, Debug)]
 pub struct LogRecord {
     pub(crate) key: Vec<u8>,
     pub(crate) value: Vec<u8>,
