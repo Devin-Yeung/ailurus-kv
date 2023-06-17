@@ -1,7 +1,32 @@
 use crate::data::data_file::{DataFile, DATAFILE_SUFFIX};
+use lazy_static::lazy_static;
 use std::fs::{remove_file, OpenOptions};
 use std::ops::{Deref, DerefMut};
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+
+lazy_static! {
+    static ref DATAFILEDISTRIBUTOR: DataFileDistributor = DataFileDistributor::new();
+}
+
+pub struct DataFileDistributor {
+    count: Mutex<u32>,
+}
+
+impl DataFileDistributor {
+    pub(crate) fn new() -> Self {
+        DataFileDistributor {
+            count: Mutex::new(0),
+        }
+    }
+
+    pub(crate) fn id(&self) -> u32 {
+        let mut guard = self.count.lock().unwrap();
+        let id = *guard;
+        *guard += 1;
+        id
+    }
+}
 
 pub struct DataFileWrapper {
     datafile: DataFile,
@@ -36,7 +61,7 @@ impl DataFileWrapper {
 
 impl Default for DataFileWrapper {
     fn default() -> Self {
-        DataFileWrapper::new(Path::new("tmp"), 0)
+        DataFileWrapper::new(Path::new("tmp"), DATAFILEDISTRIBUTOR.id())
     }
 }
 
