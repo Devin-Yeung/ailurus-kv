@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: true
+  commands:
+    rustfmt:
+      glob: "*.{rs}"
+      run: rustfmt {staged_files}
+      stage_fixed: true
+    cargo-check:
+      run: cargo check --tests
+    cargo-test:
+      run: cargo test
+
+pre-push:
+  parallel: true
+  commands:
+    cargo-check:
+      run: cargo check --tests
+    cargo-test:
+      run: cargo test
+    cargo-fmt-check:
+      run: cargo fmt --check
