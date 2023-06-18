@@ -70,7 +70,9 @@ mod tests {
     use std::path::PathBuf;
 
     fn tmp_file() -> PathBuf {
-        let _ = fs::create_dir("tmp");
+        if !Path::new("tmp").is_dir() {
+            let _ = fs::create_dir("tmp");
+        }
 
         let temp_file = tempfile::Builder::new()
             .prefix("ailurus_kv")

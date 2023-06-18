@@ -1,5 +1,6 @@
 use crate::data::data_file::{DataFile, DATAFILE_SUFFIX};
 use lazy_static::lazy_static;
+use std::fs;
 use std::fs::{remove_file, OpenOptions};
 use std::ops::{Deref, DerefMut};
 use std::path::{Path, PathBuf};
@@ -42,7 +43,12 @@ impl DataFileWrapper {
                 let datafile = std::format!("{:09}{}", id, DATAFILE_SUFFIX);
                 path.join(datafile)
             }
-            false => panic!("Invalid path"),
+            false => {
+                // TODO: deal with case that path is file not a path
+                fs::create_dir_all(&path).unwrap();
+                let datafile = std::format!("{:09}{}", id, DATAFILE_SUFFIX);
+                path.join(datafile)
+            }
         };
 
         let _ = OpenOptions::new()
