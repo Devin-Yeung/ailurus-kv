@@ -6,16 +6,16 @@ pre-commit:
       run: rustfmt {staged_files}
       stage_fixed: true
     cargo-check:
-      run: cargo check --tests
+      run: cargo check --tests --all-features
     cargo-test:
-      run: cargo test
+      run: cargo test --all-features
 
 pre-push:
   parallel: true
   commands:
     cargo-check:
-      run: cargo check --tests
+      run: cargo check --tests --all-features
     cargo-test:
-      run: cargo test
+      run: cargo test --all-features
     cargo-fmt-check:
       run: cargo fmt --check
