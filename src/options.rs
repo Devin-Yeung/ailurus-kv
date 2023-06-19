@@ -20,11 +20,11 @@ pub struct Options {
 
 pub(crate) fn check_options(opts: &Options) -> Result<()> {
     if opts.dir_path.to_str().is_none() {
-        return Err(Errors::InvalidDbPath);
+        return Err(Errors::InvalidDbPath.into());
     }
 
     if opts.data_file_size == 0 {
-        return Err(Errors::DatafileSizeTooSmall);
+        return Err(Errors::DatafileSizeTooSmall.into());
     }
 
     Ok(())
