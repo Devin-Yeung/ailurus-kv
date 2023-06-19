@@ -25,7 +25,7 @@ impl Engine {
         if opts.dir_path.is_dir() {
             if let Err(e) = fs::create_dir_all(&opts.dir_path) {
                 error!("{}", e);
-                return Err(Errors::CreateDbDirFail);
+                return Err(Errors::CreateDbDirFail.into());
             }
         }
 
@@ -55,7 +55,7 @@ impl Engine {
 
     pub fn put(&mut self, key: Bytes, value: Bytes) -> Result<()> {
         if key.is_empty() {
-            return Err(Errors::EmptyKey);
+            return Err(Errors::EmptyKey.into());
         }
 
         let record = LogRecord {
@@ -67,13 +67,13 @@ impl Engine {
         let log_record_pos = self.append_log_record(record)?;
         match self.index.put(key.to_vec(), log_record_pos) {
             true => Ok(()),
-            false => Err(IndexUpdateFail),
+            false => Err(IndexUpdateFail.into()),
         }
     }
 
     pub fn delete(&mut self, key: Bytes) -> Result<()> {
         if key.is_empty() {
-            return Err(Errors::EmptyKey);
+            return Err(Errors::EmptyKey.into());
         }
 
         if self.index.get(key.to_vec()).is_none() {
@@ -90,26 +90,26 @@ impl Engine {
 
         // update index
         if !self.index.delete(key.to_vec()) {
-            return Err(IndexUpdateFail);
+            return Err(IndexUpdateFail.into());
         }
         Ok(())
     }
 
     pub fn get(&self, key: Bytes) -> Result<Bytes> {
         if key.is_empty() {
-            return Err(Errors::EmptyKey);
+            return Err(Errors::EmptyKey.into());
         }
 
         // Check the existence of the key
         let pos = match self.index.get(key.to_vec()) {
-            None => return Err(Errors::KeyNotFound),
+            None => return Err(Errors::KeyNotFound.into()),
             Some(x) => x,
         };
 
         let log_record = match self.active_file.id() == pos.file_id {
             true => self.active_file.read(pos.offset)?,
             false => match self.older_file.get(&pos.file_id) {
-                None => return Err(Errors::DatafileNotFound),
+                None => return Err(Errors::DatafileNotFound.into()),
                 Some(x) => x.read(pos.offset)?,
             },
         };
@@ -117,11 +117,11 @@ impl Engine {
         match log_record {
             // already check the existence of key, if we go a `None` from datafile (indicate an EOF),
             // it means datafiles must have been destroyed or something unexpected happened
-            None => Err(Errors::InternalError),
+            None => Err(Errors::InternalError.into()),
             Some(record) => {
                 match record.record_type {
                     LogRecordType::Normal => Ok(record.value.into()),
-                    LogRecordType::Deleted => Err(Errors::KeyNotFound), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
+                    LogRecordType::Deleted => Err(Errors::KeyNotFound.into()), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
                 }
             }
         }
@@ -173,7 +173,7 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
                 Ok(fid) => fid,
                 Err(e) => {
                     error!("{}", e);
-                    return Err(Errors::DatafileCorrupted);
+                    return Err(Errors::DatafileCorrupted.into());
                 }
             };
             datafiles.insert(fid, DataFile::new(&path, fid)?);

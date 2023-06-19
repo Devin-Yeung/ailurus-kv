@@ -26,7 +26,7 @@ impl DataFile {
             }
             false => {
                 error!("Database dir {:?} Not exist", fname);
-                return Err(Errors::DatafileNotFound);
+                return Err(Errors::DatafileNotFound.into());
             }
         };
 
@@ -40,7 +40,7 @@ impl DataFile {
                 .len(),
             Err(e) => {
                 error!("{}", e);
-                return Err(Errors::FailToOpenFile);
+                return Err(Errors::FailToOpenFile.into());
             }
         };
 
@@ -118,7 +118,7 @@ impl DataFile {
 
         if crc != log_record.crc() {
             error!("CRC does not match");
-            return Err(Errors::DatafileCorrupted);
+            return Err(Errors::DatafileCorrupted.into());
         }
 
         Ok(Some(log_record))

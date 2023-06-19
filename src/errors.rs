@@ -32,4 +32,7 @@ pub enum Errors {
     InternalError,
 }
 
+#[cfg(not(feature = "debug"))]
 pub type Result<T> = std::result::Result<T, Errors>;
+#[cfg(feature = "debug")]
+pub type Result<T> = anyhow::Result<T, anyhow::Error>;
