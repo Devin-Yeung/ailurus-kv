@@ -24,7 +24,10 @@ impl DataFile {
                 let datafile = std::format!("{:09}{}", id, DATAFILE_SUFFIX);
                 fname.join(datafile)
             }
-            false => return Err(Errors::DatafileNotFound),
+            false => {
+                error!("Database dir {:?} Not exist", fname);
+                return Err(Errors::DatafileNotFound);
+            }
         };
 
         let offset = match std::fs::File::open(&fname) {
