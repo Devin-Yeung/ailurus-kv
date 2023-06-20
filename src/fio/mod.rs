@@ -41,6 +41,9 @@ pub trait IOManager: Send + Sync {
     /// is successful, it returns `Ok(())`. If an error occurs during the synchronization, it returns `Err(error)`
     /// with an associated error value.
     fn sync(&self) -> Result<()>;
+
+    /// Returns the total size of this file in bytes.
+    fn size(&self) -> Result<u64>;
 }
 
 pub fn io_manager<'a, 'b, P: AsRef<Path> + 'a>(path: P) -> Result<impl IOManager + 'b> {

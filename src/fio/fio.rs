@@ -4,7 +4,7 @@ use log::error;
 use parking_lot::RwLock;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
-use std::os::unix::fs::FileExt;
+use std::os::unix::fs::{FileExt, MetadataExt};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -60,6 +60,19 @@ impl IOManager for FileIO {
             return Err(Errors::FailToSyncFile.into());
         }
         Ok(())
+    }
+
+    fn size(&self) -> Result<u64> {
+        let size = self
+            .fd
+            .read()
+            .metadata()
+            .map_err(|e| {
+                error!("{}", e);
+                Errors::InternalError
+            })?
+            .size();
+        Ok(size)
     }
 }
 
