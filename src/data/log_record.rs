@@ -106,7 +106,8 @@ impl LogRecord {
     ///
     /// The time complexity of the call does *not* guarantee O(1) due to the implementation
     pub fn size(&self) -> u64 {
-        todo!()
+        // TODO: [perf] improve the performance
+        return self.encode().len() as u64;
     }
 
     pub fn crc(&self) -> u32 {
