@@ -93,6 +93,11 @@ impl DataFile {
                 + length_delimiter_len(u32::MAX as usize) * 2, /* variable key size and value size */
         );
 
+        // if remaining bytes not enough, means can not read a valid record
+        if self.io_manager.size()? - offset < header.len() as u64 {
+            return Ok(None);
+        }
+
         self.io_manager.read(&mut header, offset)?;
 
         let crc = header.get_u32();
