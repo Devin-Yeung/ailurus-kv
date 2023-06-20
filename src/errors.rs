@@ -24,6 +24,8 @@ pub enum Errors {
     IndexUpdateFail,
     #[error("Fail to create database directory")]
     CreateDbDirFail,
+    #[error("Fail to create database file")]
+    CreateDbFileFail,
     #[error("Read to create database directory")]
     ReadDbDirFail,
     #[error("Path to database is invalid")]

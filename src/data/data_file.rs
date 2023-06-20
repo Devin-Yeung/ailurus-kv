@@ -30,6 +30,14 @@ impl DataFile {
             }
         };
 
+        // Check the existence of Datafile, if not exist, create one
+        if !fname.is_file() {
+            let _ = std::fs::File::create(&fname).map_err(|e| {
+                error!("{}", e);
+                return Errors::CreateDbFileFail;
+            })?;
+        }
+
         let offset = match std::fs::File::open(&fname) {
             Ok(f) => f
                 .metadata()
