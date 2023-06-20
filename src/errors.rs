@@ -26,7 +26,7 @@ pub enum Errors {
     CreateDbDirFail,
     #[error("Fail to create database file")]
     CreateDbFileFail,
-    #[error("Read to create database directory")]
+    #[error("Fail to read database directory")]
     ReadDbDirFail,
     #[error("Path to database is invalid")]
     InvalidDbPath,
