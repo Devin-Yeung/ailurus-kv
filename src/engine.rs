@@ -154,7 +154,7 @@ impl Engine {
         // indexing info
         Ok(LogRecordPos {
             file_id: self.active_file.id(),
-            offset: self.active_file.offset(),
+            offset: self.active_file.offset() - record_len, // offset indicate the start position
         })
     }
 }
