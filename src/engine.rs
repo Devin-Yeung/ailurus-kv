@@ -11,7 +11,7 @@ use std::fs;
 use std::path::Path;
 
 pub struct Engine {
-    options: options::Options,
+    pub(crate) options: options::Options,
     active_file: DataFile,
     older_file: HashMap<u32, DataFile>,
     index: Box<dyn index::Indexer>,

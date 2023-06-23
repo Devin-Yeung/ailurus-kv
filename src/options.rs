@@ -2,11 +2,13 @@ use crate::errors::{Errors, Result};
 use std::path::PathBuf;
 
 #[non_exhaustive]
+#[derive(Clone)]
 pub enum IndexType {
     BTree,
     SkipList,
 }
 
+#[derive(Clone)]
 pub struct Options {
     /// location of database
     pub dir_path: PathBuf,

@@ -58,6 +58,14 @@ impl EngineWrapper {
             engine: Engine::new(opts).unwrap(),
         }
     }
+
+    pub(crate) fn reopen(mut self) -> EngineWrapper {
+        // FIXME: The old engine is not dropped when the reopened engine is opened
+        // so the `drop` method of the old engine may not be applied timely
+        let engine = Engine::new(self.options.clone()).unwrap();
+        let _ = std::mem::replace(&mut self.engine, engine);
+        self
+    }
 }
 
 impl Default for EngineWrapper {
