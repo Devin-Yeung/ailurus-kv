@@ -1,7 +1,8 @@
 use crate::data::data_file::DataFile;
 use crate::data::log_record::{LogRecordPos, LogRecordType};
 use crate::errors::Result;
-use crate::index::{Indexable, Indexer};
+use crate::index::{IndexIterator, Indexable, Indexer};
+use crate::options::IteratorOptions;
 use parking_lot::RwLock;
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -67,6 +68,10 @@ impl Indexer for BTree {
     fn delete(&mut self, key: Vec<u8>) -> bool {
         let mut writer = self.tree.write();
         writer.remove(&key).is_some()
+    }
+
+    fn iterator<'a>(&self, options: IteratorOptions) -> &'a dyn IndexIterator {
+        todo!()
     }
 }
 

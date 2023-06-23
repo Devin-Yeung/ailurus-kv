@@ -3,7 +3,7 @@ use crate::data::data_file::DataFile;
 use crate::data::log_record::LogRecordPos;
 use crate::errors::Result;
 use crate::index::btree::BTree;
-use crate::options::IndexType;
+use crate::options::{IndexType, IteratorOptions};
 
 pub trait Indexer {
     /// Inserts a key-value pair into the index.
@@ -40,6 +40,19 @@ pub trait Indexer {
     ///
     /// Returns `true` if the deletion was successful, `false` otherwise.
     fn delete(&mut self, key: Vec<u8>) -> bool;
+
+    /// Returns an iterator over the index.
+    ///
+    /// This method returns an iterator that implements the `IndexIterator` trait.
+    ///
+    /// # Arguments
+    ///
+    /// * `options` - An `IteratorOptions` struct specifying the options for the iterator.
+    ///
+    /// # Returns
+    ///
+    /// A reference to an object that implements the `IndexIterator` trait.
+    fn iterator<'a>(&self, options: IteratorOptions) -> &'a dyn IndexIterator;
 }
 
 pub trait Indexable {
@@ -47,6 +60,28 @@ pub trait Indexable {
     where
         D: IntoIterator<Item = &'a DataFile>,
         Self: Sized;
+}
+
+pub trait IndexIterator {
+    /// Rewinds the iterator to the beginning.
+    fn rewind(&mut self);
+
+    /// Seeks the iterator to a specific key.
+    /// If key not found, seeks the iterator to the key *greater* than the given key,
+    /// the order is define in [IteratorOptions]
+    ///
+    /// [IteratorOptions]: crate::options::IteratorOptions
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - A vector of bytes representing the key to seek.
+    fn seek(&mut self, key: Vec<u8>);
+
+    /// Retrieves the next key-value pair from the iterator.
+    ///
+    /// Returns `Some` with a reference to the key and value if there is a next element,
+    /// or `None` if the iterator has reached the end.
+    fn next(&self) -> Option<(&Vec<u8>, &LogRecordPos)>;
 }
 
 pub fn indexer<'a, D>(datafiles: D, index_type: &IndexType) -> Result<Box<dyn Indexer>>

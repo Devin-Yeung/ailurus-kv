@@ -31,3 +31,17 @@ pub(crate) fn check_options(opts: &Options) -> Result<()> {
 
     Ok(())
 }
+
+pub struct IteratorOptions {
+    pub prefix: Vec<u8>,
+    pub reverse: bool,
+}
+
+impl Default for IteratorOptions {
+    fn default() -> Self {
+        Self {
+            prefix: Default::default(),
+            reverse: false,
+        }
+    }
+}
