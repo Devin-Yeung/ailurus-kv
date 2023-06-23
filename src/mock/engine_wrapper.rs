@@ -11,38 +11,39 @@ const PREFIX: &str = "tmp/engine";
 lazy_static! {
     static ref ENGINEDISTRIBUTOR: EngineDistributor = EngineDistributor::new();
 }
+pub struct Inner {
+    id: u32,
+    count: u32,
+}
 
 pub struct EngineDistributor {
-    id: Mutex<u32>,
-    count: Mutex<u32>,
+    inner: Mutex<Inner>,
 }
 
 impl EngineDistributor {
     pub fn new() -> Self {
         EngineDistributor {
-            id: Mutex::new(0),
-            count: Mutex::new(0),
+            inner: Mutex::new(Inner { id: 0, count: 0 }),
         }
     }
 
     pub fn path(&self) -> PathBuf {
         let mut path = PathBuf::from(PREFIX);
-        let id: u32 = *self.id.lock().unwrap();
-        *self.id.lock().unwrap() += 1;
-        *self.count.lock().unwrap() += 1;
-        path.push(id.to_string());
-        // create dir if not exist
-        if !path.is_dir() {
-            fs::create_dir_all(&path).unwrap()
-        }
+        let mut inner = self.inner.lock().unwrap();
+        path.push(inner.id.to_string());
+        inner.id += 1;
+        inner.count += 1;
+        drop(inner);
         path
     }
 
     pub fn drop(&self) {
-        *self.count.lock().unwrap() -= 1;
-        if *self.count.lock().unwrap() == 0 {
+        let mut inner = self.inner.lock().unwrap();
+        inner.count -= 1;
+        if inner.count == 0 {
             fs::remove_dir(PREFIX).unwrap();
         }
+        drop(inner);
     }
 }
 
@@ -53,6 +54,11 @@ pub struct EngineWrapper {
 
 impl EngineWrapper {
     pub(crate) fn new(opts: crate::options::Options) -> EngineWrapper {
+        // create dir if not exist
+        if !opts.dir_path.is_dir() {
+            fs::create_dir_all(&opts.dir_path).unwrap()
+        }
+
         EngineWrapper {
             path: opts.dir_path.to_owned(),
             engine: Engine::new(opts).unwrap(),
@@ -106,7 +112,11 @@ impl Drop for EngineWrapper {
 
 #[cfg(test)]
 mod tests {
-    use crate::mock::engine_wrapper::EngineWrapper;
+    use crate::mock::engine_wrapper::{EngineWrapper, ENGINEDISTRIBUTOR};
+    use std::collections::HashSet;
+    use std::path::PathBuf;
+    use std::sync::{Arc, Mutex};
+    use std::thread::spawn;
 
     #[test]
     fn distribute_one_engine() {
@@ -115,5 +125,26 @@ mod tests {
         assert!(path.is_dir());
         drop(engine);
         assert!(!path.is_dir());
+    }
+
+    #[test]
+    fn path_never_collision() {
+        let memo = Arc::new(Mutex::new(HashSet::<PathBuf>::new()));
+        let mut handlers = Vec::new();
+
+        for _ in 1..100 {
+            let memo = memo.clone();
+            let handler = spawn(move || {
+                let generated = ENGINEDISTRIBUTOR.path();
+                let mut guard = memo.lock().unwrap();
+                assert!(!guard.contains(&generated));
+                guard.insert(generated);
+                drop(guard);
+            });
+            handlers.push(handler);
+        }
+        for handler in handlers {
+            handler.join().unwrap();
+        }
     }
 }
