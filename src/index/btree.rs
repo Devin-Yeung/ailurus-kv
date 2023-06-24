@@ -70,8 +70,61 @@ impl Indexer for BTree {
         writer.remove(&key).is_some()
     }
 
-    fn iterator<'a>(&self, options: IteratorOptions) -> &'a dyn IndexIterator {
-        todo!()
+    fn iterator(&self, options: IteratorOptions) -> Box<dyn IndexIterator> {
+        let read = self.tree.read();
+        // TODO: [perf] memory usage maybe very large
+        let mut items: Vec<_> = read.iter().map(|x| (x.0.clone(), x.1.clone())).collect();
+
+        if options.reverse {
+            items.reverse();
+        }
+
+        Box::new(BtreeIterator {
+            items,
+            index: 0,
+            options,
+        })
+    }
+}
+
+pub struct BtreeIterator {
+    items: Vec<(Vec<u8>, LogRecordPos)>,
+    index: usize,
+    options: IteratorOptions,
+}
+
+impl IndexIterator for BtreeIterator {
+    fn rewind(&mut self) {
+        self.index = 0
+    }
+
+    fn seek(&mut self, key: Vec<u8>) {
+        self.index = match self.items.binary_search_by(|(x, _)| {
+            if self.options.reverse {
+                x.cmp(&key).reverse()
+            } else {
+                x.cmp(&key)
+            }
+        }) {
+            Ok(x) => x,
+            Err(x) => x,
+        };
+    }
+
+    fn next(&mut self) -> Option<(&Vec<u8>, &LogRecordPos)> {
+        if self.index >= self.items.len() {
+            return None;
+        }
+
+        while let Some(item) = self.items.get(self.index) {
+            self.index += 1;
+            let prefix = &self.options.prefix;
+            if prefix.is_empty() || item.0.starts_with(prefix) {
+                return Some((&item.0, &item.1));
+            }
+        }
+
+        None
     }
 }
 
@@ -166,5 +219,138 @@ mod tests {
 
         b.delete("1024".as_bytes().to_vec());
         assert_eq!(b.get("1024".as_bytes().to_vec()), None);
+    }
+
+    #[test]
+    fn seek_when_empty() {
+        let bt = BTree::new();
+        let mut iter = bt.iterator(IteratorOptions::default());
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn seek_larger_than() {
+        let mut bt = BTree::new();
+        bt.put(
+            "a".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        bt.put(
+            "c".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        let mut iter = bt.iterator(IteratorOptions::default());
+        iter.seek("b".as_bytes().to_vec());
+        assert_eq!(iter.next().unwrap().0, &"c".as_bytes().to_vec());
+    }
+
+    #[test]
+    fn seek_equal() {
+        let mut bt = BTree::new();
+        bt.put(
+            "a".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        bt.put(
+            "b".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        bt.put(
+            "c".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        let mut iter = bt.iterator(IteratorOptions::default());
+        iter.seek("b".as_bytes().to_vec());
+        assert_eq!(iter.next().unwrap().0, &"b".as_bytes().to_vec());
+        assert_eq!(iter.next().unwrap().0, &"c".as_bytes().to_vec());
+    }
+
+    #[test]
+    fn seek_larger_than_reverse() {
+        let mut bt = BTree::new();
+        bt.put(
+            "a".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        bt.put(
+            "c".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        let mut iter = bt.iterator(IteratorOptions {
+            prefix: Default::default(),
+            reverse: true,
+        });
+        iter.seek("b".as_bytes().to_vec());
+        assert_eq!(iter.next().unwrap().0, &"a".as_bytes().to_vec());
+    }
+
+    #[test]
+    fn seek_equal_reverse() {
+        let mut bt = BTree::new();
+        bt.put(
+            "a".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        bt.put(
+            "b".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        bt.put(
+            "c".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        let mut iter = bt.iterator(IteratorOptions {
+            prefix: Default::default(),
+            reverse: true,
+        });
+        iter.seek("b".as_bytes().to_vec());
+        assert_eq!(iter.next().unwrap().0, &"b".as_bytes().to_vec());
+        assert_eq!(iter.next().unwrap().0, &"a".as_bytes().to_vec());
+    }
+
+    #[test]
+    fn rewind() {
+        let mut bt = BTree::new();
+        bt.put(
+            "a".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        let mut iter = bt.iterator(IteratorOptions::default());
+        iter.next();
+        iter.rewind();
+        assert_eq!(iter.next().unwrap().0, &"a".as_bytes().to_vec());
     }
 }
