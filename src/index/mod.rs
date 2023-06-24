@@ -51,8 +51,8 @@ pub trait Indexer {
     ///
     /// # Returns
     ///
-    /// A reference to an object that implements the `IndexIterator` trait.
-    fn iterator<'a>(&self, options: IteratorOptions) -> &'a dyn IndexIterator;
+    /// A box to an object that implements the `IndexIterator` trait.
+    fn iterator(&self, options: IteratorOptions) -> Box<dyn IndexIterator>;
 }
 
 pub trait Indexable {
@@ -81,7 +81,7 @@ pub trait IndexIterator {
     ///
     /// Returns `Some` with a reference to the key and value if there is a next element,
     /// or `None` if the iterator has reached the end.
-    fn next(&self) -> Option<(&Vec<u8>, &LogRecordPos)>;
+    fn next(&mut self) -> Option<(&Vec<u8>, &LogRecordPos)>;
 }
 
 pub fn indexer<'a, D>(datafiles: D, index_type: &IndexType) -> Result<Box<dyn Indexer>>
