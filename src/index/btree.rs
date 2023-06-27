@@ -118,8 +118,7 @@ impl IndexIterator for BtreeIterator {
 
         while let Some(item) = self.items.get(self.index) {
             self.index += 1;
-            let prefix = &self.options.prefix;
-            if prefix.is_empty() || item.0.starts_with(prefix) {
+            if (self.options.filter)(&item.0) {
                 return Some((&item.0, &item.1));
             }
         }
@@ -298,7 +297,7 @@ mod tests {
             },
         );
         let mut iter = bt.iterator(IteratorOptions {
-            prefix: Default::default(),
+            filter: Box::new(|_| true),
             reverse: true,
         });
         iter.seek("b".as_bytes().to_vec());
@@ -330,7 +329,7 @@ mod tests {
             },
         );
         let mut iter = bt.iterator(IteratorOptions {
-            prefix: Default::default(),
+            filter: Box::new(|_| true),
             reverse: true,
         });
         iter.seek("b".as_bytes().to_vec());

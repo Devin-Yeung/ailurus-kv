@@ -33,14 +33,14 @@ pub(crate) fn check_options(opts: &Options) -> Result<()> {
 }
 
 pub struct IteratorOptions {
-    pub prefix: Vec<u8>,
+    pub filter: Box<dyn FnMut(&Vec<u8>) -> bool>,
     pub reverse: bool,
 }
 
 impl Default for IteratorOptions {
     fn default() -> Self {
         Self {
-            prefix: Default::default(),
+            filter: Box::new(|_| true),
             reverse: false,
         }
     }
