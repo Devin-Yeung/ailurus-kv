@@ -106,6 +106,10 @@ impl Engine {
             Some(x) => x,
         };
 
+        self.at(&pos)
+    }
+
+    pub fn at(&self, pos: &LogRecordPos) -> Result<Bytes> {
         let log_record = match self.active_file.id() == pos.file_id {
             true => self.active_file.read(pos.offset)?,
             false => match self.older_file.get(&pos.file_id) {
@@ -115,7 +119,7 @@ impl Engine {
         };
 
         match log_record {
-            // already check the existence of key, if we go a `None` from datafile (indicate an EOF),
+            // already check the existence of key, if we got a `None` from datafile (indicate an EOF),
             // it means datafiles must have been destroyed or something unexpected happened
             None => Err(Errors::InternalError.into()),
             Some(record) => {
