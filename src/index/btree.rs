@@ -131,6 +131,33 @@ impl IndexIterator for BtreeIterator {
 mod tests {
     use super::*;
 
+    macro_rules! btree {
+        // Construct btree, cares about key value pair
+        ($({$key:expr, {$id:expr, $offset:expr}}),* $(,)?) => {{
+            let mut b = BTree::new();
+            $(b.put(
+                $key.as_bytes().to_vec(),
+                LogRecordPos {
+                    file_id: $id,
+                    offset: $offset,
+                },
+            );)*
+            b
+        }};
+        // Construct btree, only cares about keys
+        ($($key:expr),* $(,)?) => {{
+            let mut b = BTree::new();
+            $(b.put(
+                $key.as_bytes().to_vec(),
+                LogRecordPos {
+                    file_id: 0,
+                    offset: 0,
+                },
+            );)*
+            b
+        }}
+    }
+
     #[test]
     fn put() {
         let mut b = BTree::new();
@@ -152,21 +179,7 @@ mod tests {
 
     #[test]
     fn get() {
-        let mut b = BTree::new();
-        assert!(b.put(
-            "42".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 42,
-                offset: 42,
-            },
-        ));
-        assert!(b.put(
-            "1024".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 1024,
-                offset: 1024,
-            },
-        ));
+        let b = btree!({"42", { 42, 42 }}, {"1024", {1024, 1024}});
 
         assert_eq!(
             b.get("42".as_bytes().to_vec()).unwrap(),
@@ -189,21 +202,7 @@ mod tests {
 
     #[test]
     fn delete() {
-        let mut b = BTree::new();
-        assert!(b.put(
-            "42".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 42,
-                offset: 42,
-            },
-        ));
-        assert!(b.put(
-            "1024".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 1024,
-                offset: 1024,
-            },
-        ));
+        let mut b = btree!({"42", { 42, 42 }}, {"1024", {1024, 1024}});
 
         b.delete("42".as_bytes().to_vec());
         assert_eq!(b.get("42".as_bytes().to_vec()), None);
@@ -229,21 +228,7 @@ mod tests {
 
     #[test]
     fn seek_larger_than() {
-        let mut bt = BTree::new();
-        bt.put(
-            "a".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
-        bt.put(
-            "c".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
+        let bt = btree!("a", "c");
         let mut iter = bt.iterator(IteratorOptions::default());
         iter.seek("b".as_bytes().to_vec());
         assert_eq!(iter.next().unwrap().0, &"c".as_bytes().to_vec());
@@ -251,28 +236,7 @@ mod tests {
 
     #[test]
     fn seek_equal() {
-        let mut bt = BTree::new();
-        bt.put(
-            "a".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
-        bt.put(
-            "b".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
-        bt.put(
-            "c".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
+        let bt = btree!("a", "b", "c");
         let mut iter = bt.iterator(IteratorOptions::default());
         iter.seek("b".as_bytes().to_vec());
         assert_eq!(iter.next().unwrap().0, &"b".as_bytes().to_vec());
@@ -281,21 +245,7 @@ mod tests {
 
     #[test]
     fn seek_larger_than_reverse() {
-        let mut bt = BTree::new();
-        bt.put(
-            "a".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
-        bt.put(
-            "c".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
+        let bt = btree!("a", "c");
         let mut iter = bt.iterator(IteratorOptions {
             filter: Box::new(|_| true),
             reverse: true,
@@ -306,28 +256,7 @@ mod tests {
 
     #[test]
     fn seek_equal_reverse() {
-        let mut bt = BTree::new();
-        bt.put(
-            "a".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
-        bt.put(
-            "b".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
-        bt.put(
-            "c".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
+        let bt = btree!("a", "b", "c");
         let mut iter = bt.iterator(IteratorOptions {
             filter: Box::new(|_| true),
             reverse: true,
@@ -339,14 +268,7 @@ mod tests {
 
     #[test]
     fn rewind() {
-        let mut bt = BTree::new();
-        bt.put(
-            "a".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
+        let bt = btree!("a");
         let mut iter = bt.iterator(IteratorOptions::default());
         iter.next();
         iter.rewind();
@@ -355,22 +277,7 @@ mod tests {
 
     #[test]
     fn filter_iter() {
-        let mut bt = BTree::new();
-        bt.put(
-            "a".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
-
-        bt.put(
-            "b".as_bytes().to_vec(),
-            LogRecordPos {
-                file_id: 0,
-                offset: 0,
-            },
-        );
+        let bt = btree!("a", "b");
         let mut iter = bt.iterator(IteratorOptions {
             filter: Box::new(|x| x == &"b".as_bytes().to_vec()),
             reverse: false,
