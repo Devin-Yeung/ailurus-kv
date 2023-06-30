@@ -87,16 +87,17 @@ impl DataFile {
         // +-------+--------+-----------+-------------+-----------+-------------+
         // |  CRC  |  Type  |  KeySize  |  ValueSize  |    Key    |    Value    |
         // +-------+--------+-----------+-------------+-----------+-------------+
-        let mut header = BytesMut::zeroed(
-            std::mem::size_of::<u32>() /* size of CRC */
-                + std::mem::size_of::<u8>() /* size of Type */
-                + length_delimiter_len(u32::MAX as usize) * 2, /* variable key size and value size */
-        );
 
-        // if remaining bytes not enough, means can not read a valid record
-        if self.io_manager.size()? - offset < header.len() as u64 {
-            return Ok(None);
-        }
+        let max_header_sz = std::mem::size_of::<u32>() /* size of CRC */
+            + std::mem::size_of::<u8>() /* size of Type */
+            + length_delimiter_len(u32::MAX as usize) * 2 /* variable key size and value size */;
+
+        // if remaining bytes is zero, means EOF reached
+        let mut header = match (self.io_manager.size()? - offset) as usize {
+            remaining if remaining < max_header_sz => BytesMut::zeroed(remaining),
+            remaining if remaining > max_header_sz => BytesMut::zeroed(max_header_sz),
+            _ => return Ok(None),
+        };
 
         self.io_manager.read(&mut header, offset)?;
 

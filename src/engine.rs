@@ -201,6 +201,14 @@ mod tests {
     }
 
     #[test]
+    fn put_many_get_many() {
+        let engine = engine!(["a", "val-a"], ["b", "val-b"], ["c", "val-c"]);
+        assert_eq!(engine.get("a".into()).unwrap(), "val-a");
+        assert_eq!(engine.get("b".into()).unwrap(), "val-b");
+        assert_eq!(engine.get("c".into()).unwrap(), "val-c");
+    }
+
+    #[test]
     fn overwrite_put() {
         let db = engine!(["Hello", "Hello"], ["Hello", "World"]);
         assert_eq!(db.get("Hello".into()).unwrap(), Bytes::from("World"));
