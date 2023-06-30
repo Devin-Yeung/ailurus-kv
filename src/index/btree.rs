@@ -134,10 +134,10 @@ mod tests {
     macro_rules! btree {
         // Construct btree, cares about key value pair
         ($({$key:expr, {$id:expr, $offset:expr}}),* $(,)?) => {{
-            let mut b = BTree::new();
+            let mut b = $crate::index::btree::BTree::new();
             $(b.put(
                 $key.as_bytes().to_vec(),
-                LogRecordPos {
+                crate::data::log_record::LogRecordPos {
                     file_id: $id,
                     offset: $offset,
                 },
@@ -146,10 +146,10 @@ mod tests {
         }};
         // Construct btree, only cares about keys
         ($($key:expr),* $(,)?) => {{
-            let mut b = BTree::new();
+            let mut b = $crate::index::btree::BTree::new();
             $(b.put(
                 $key.as_bytes().to_vec(),
-                LogRecordPos {
+                crate::data::log_record::LogRecordPos {
                     file_id: 0,
                     offset: 0,
                 },

@@ -12,7 +12,7 @@ const PREFIX: &str = "tmp/engine";
 macro_rules! engine {
     ($([$key:expr, $value:expr]),* $(,)?) => {{
         #[allow(unused_mut)]
-        let mut db = EngineWrapper::default();
+        let mut db = $crate::mock::engine_wrapper::EngineWrapper::default();
         $(db.put($key.into(),$value.into()).unwrap();)*
         db
     }};
