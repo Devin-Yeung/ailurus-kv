@@ -8,6 +8,16 @@ use std::sync::Mutex;
 
 const PREFIX: &str = "tmp/engine";
 
+#[macro_export]
+macro_rules! engine {
+    ($([$key:expr, $value:expr]),* $(,)?) => {{
+        #[allow(unused_mut)]
+        let mut db = EngineWrapper::default();
+        $(db.put($key.into(),$value.into()).unwrap();)*
+        db
+    }};
+}
+
 lazy_static! {
     static ref ENGINEDISTRIBUTOR: EngineDistributor = EngineDistributor::new();
 }

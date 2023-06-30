@@ -189,28 +189,26 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
 
 #[cfg(test)]
 mod tests {
+    use crate::engine;
     use crate::errors::Errors;
     use crate::mock::engine_wrapper::EngineWrapper;
     use bytes::Bytes;
 
     #[test]
     fn simple_put_and_get() {
-        let mut db = EngineWrapper::default();
-        db.put("Hello".into(), "World".into()).unwrap();
+        let db = engine!(["Hello", "World"]);
         assert_eq!(db.get("Hello".into()).unwrap(), Bytes::from("World"));
     }
 
     #[test]
     fn overwrite_put() {
-        let mut db = EngineWrapper::default();
-        db.put("Hello".into(), "Hello".into()).unwrap();
-        db.put("Hello".into(), "World".into()).unwrap();
+        let db = engine!(["Hello", "Hello"], ["Hello", "World"]);
         assert_eq!(db.get("Hello".into()).unwrap(), Bytes::from("World"));
     }
 
     #[test]
     fn get_non_exist_key() {
-        let db = EngineWrapper::default();
+        let db = engine!();
         let x = db.get("Non Exist".into());
         #[cfg(feature = "debug")]
         let x = x.err().unwrap().downcast::<Errors>().unwrap();
