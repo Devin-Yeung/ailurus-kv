@@ -3,6 +3,7 @@ pub mod engine;
 pub mod errors;
 pub mod fio;
 pub mod index;
+mod iterator;
 mod mock;
 pub mod options;
 mod utils;

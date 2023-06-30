@@ -14,7 +14,7 @@ pub struct Engine {
     pub(crate) options: options::Options,
     active_file: DataFile,
     older_file: HashMap<u32, DataFile>,
-    index: Box<dyn index::Indexer>,
+    pub(crate) index: Box<dyn index::Indexer>,
 }
 
 impl Engine {
