@@ -352,4 +352,29 @@ mod tests {
         iter.rewind();
         assert_eq!(iter.next().unwrap().0, &"a".as_bytes().to_vec());
     }
+
+    #[test]
+    fn filter_iter() {
+        let mut bt = BTree::new();
+        bt.put(
+            "a".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+
+        bt.put(
+            "b".as_bytes().to_vec(),
+            LogRecordPos {
+                file_id: 0,
+                offset: 0,
+            },
+        );
+        let mut iter = bt.iterator(IteratorOptions {
+            filter: Box::new(|x| x == &"b".as_bytes().to_vec()),
+            reverse: false,
+        });
+        assert_eq!(iter.next().unwrap().0, &"b".as_bytes().to_vec());
+    }
 }
