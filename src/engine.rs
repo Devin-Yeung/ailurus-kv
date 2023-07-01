@@ -189,9 +189,9 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::engine;
     use crate::errors::Errors;
     use crate::mock::engine_wrapper::EngineWrapper;
+    use crate::{ecast, engine};
     use bytes::Bytes;
 
     #[test]
@@ -218,10 +218,6 @@ mod tests {
     fn get_non_exist_key() {
         let db = engine!();
         let x = db.get("Non Exist".into());
-        #[cfg(feature = "debug")]
-        let x = x.err().unwrap().downcast::<Errors>().unwrap();
-        #[cfg(not(feature = "debug"))]
-        let x = x.err().unwrap();
-        assert_eq!(x, Errors::KeyNotFound);
+        assert_eq!(ecast!(x), Err(Errors::KeyNotFound));
     }
 }
