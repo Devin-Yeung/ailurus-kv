@@ -1,3 +1,4 @@
+use crate::err;
 use crate::errors::{Errors, Result};
 use std::path::PathBuf;
 
@@ -22,11 +23,11 @@ pub struct Options {
 
 pub(crate) fn check_options(opts: &Options) -> Result<()> {
     if opts.dir_path.to_str().is_none() {
-        return Err(Errors::InvalidDbPath.into());
+        return err!(Errors::InvalidDbPath);
     }
 
     if opts.data_file_size == 0 {
-        return Err(Errors::DatafileSizeTooSmall.into());
+        return err!(Errors::DatafileSizeTooSmall);
     }
 
     Ok(())

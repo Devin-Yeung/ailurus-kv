@@ -3,7 +3,7 @@ use crate::data::log_record::{LogRecord, LogRecordPos, LogRecordType};
 use crate::errors::Errors::IndexUpdateFail;
 use crate::errors::{Errors, Result};
 use crate::index::indexer;
-use crate::{index, options};
+use crate::{err, index, options};
 use bytes::Bytes;
 use log::error;
 use std::collections::HashMap;
@@ -25,7 +25,7 @@ impl Engine {
         if opts.dir_path.is_dir() {
             if let Err(e) = fs::create_dir_all(&opts.dir_path) {
                 error!("{}", e);
-                return Err(Errors::CreateDbDirFail.into());
+                return err!(Errors::CreateDbDirFail);
             }
         }
 
@@ -55,7 +55,7 @@ impl Engine {
 
     pub fn put(&mut self, key: Bytes, value: Bytes) -> Result<()> {
         if key.is_empty() {
-            return Err(Errors::EmptyKey.into());
+            return err!(Errors::EmptyKey);
         }
 
         let record = LogRecord {
@@ -73,11 +73,11 @@ impl Engine {
 
     pub fn delete(&mut self, key: Bytes) -> Result<()> {
         if key.is_empty() {
-            return Err(Errors::EmptyKey.into());
+            return err!(Errors::EmptyKey);
         }
 
         if self.index.get(key.to_vec()).is_none() {
-            return Err(Errors::KeyNotFound.into());
+            return err!(Errors::KeyNotFound);
         };
 
         let record = LogRecord {
@@ -90,19 +90,19 @@ impl Engine {
 
         // update index
         if !self.index.delete(key.to_vec()) {
-            return Err(IndexUpdateFail.into());
+            return err!(Errors::IndexUpdateFail);
         }
         Ok(())
     }
 
     pub fn get(&self, key: Bytes) -> Result<Bytes> {
         if key.is_empty() {
-            return Err(Errors::EmptyKey.into());
+            return err!(Errors::EmptyKey);
         }
 
         // Check the existence of the key
         let pos = match self.index.get(key.to_vec()) {
-            None => return Err(Errors::KeyNotFound.into()),
+            None => return err!(Errors::KeyNotFound),
             Some(x) => x,
         };
 
@@ -113,7 +113,7 @@ impl Engine {
         let log_record = match self.active_file.id() == pos.file_id {
             true => self.active_file.read(pos.offset)?,
             false => match self.older_file.get(&pos.file_id) {
-                None => return Err(Errors::DatafileNotFound.into()),
+                None => return err!(Errors::DatafileNotFound),
                 Some(x) => x.read(pos.offset)?,
             },
         };
@@ -177,7 +177,7 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
                 Ok(fid) => fid,
                 Err(e) => {
                     error!("{}", e);
-                    return Err(Errors::DatafileCorrupted.into());
+                    return err!(Errors::DatafileCorrupted);
                 }
             };
             datafiles.insert(fid, DataFile::new(&path, fid)?);

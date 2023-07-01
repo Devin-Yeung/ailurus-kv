@@ -38,3 +38,18 @@ pub enum Errors {
 pub type Result<T> = std::result::Result<T, Errors>;
 #[cfg(feature = "debug")]
 pub type Result<T> = anyhow::Result<T, anyhow::Error>;
+
+#[macro_export]
+macro_rules! err {
+    ($err:expr) => {{
+        #[cfg(not(feature = "debug"))]
+        {
+            Err($err)
+        }
+
+        #[cfg(feature = "debug")]
+        {
+            Err($err.into())
+        }
+    }};
+}

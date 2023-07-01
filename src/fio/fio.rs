@@ -1,3 +1,4 @@
+use crate::err;
 use crate::errors::{Errors, Result};
 use crate::fio::IOManager;
 use log::error;
@@ -57,7 +58,7 @@ impl IOManager for FileIO {
         let reader = self.fd.read();
         if let Err(e) = reader.sync_all() {
             error!("{}", e);
-            return Err(Errors::FailToSyncFile.into());
+            return err!(Errors::FailToSyncFile);
         }
         Ok(())
     }
