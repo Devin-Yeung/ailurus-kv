@@ -77,7 +77,7 @@ impl Engine {
         }
 
         if self.index.get(key.to_vec()).is_none() {
-            return Ok(());
+            return Err(Errors::KeyNotFound.into());
         };
 
         let record = LogRecord {
