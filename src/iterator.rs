@@ -34,3 +34,77 @@ impl Iterator<'_> {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::engine;
+    use crate::options::IteratorOptions;
+
+    #[test]
+    fn rewind() {
+        let engine = engine!(["Hello", "World"], ["World", "Hello"]);
+        let mut iter = engine.iter(IteratorOptions::default());
+        for _ in 0..2 {
+            let _ = iter.next();
+        }
+        iter.rewind();
+        assert_eq!(iter.next().unwrap(), ("Hello".into(), "World".into()))
+    }
+
+    #[test]
+    fn iter() {
+        let engine = engine!(["a", "val-a"], ["b", "val-b"], ["c", "val-c"]);
+        let mut iter = engine.iter(IteratorOptions::default());
+        assert_eq!(iter.next().unwrap(), ("a".into(), "val-a".into()));
+        assert_eq!(iter.next().unwrap(), ("b".into(), "val-b".into()));
+        assert_eq!(iter.next().unwrap(), ("c".into(), "val-c".into()));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn reverse_iter() {
+        let engine = engine!(["a", "val-a"], ["b", "val-b"], ["c", "val-c"]);
+        let mut iter = engine.iter(IteratorOptions {
+            filter: Box::new(|_| true),
+            reverse: true,
+        });
+        assert_eq!(iter.next().unwrap(), ("c".into(), "val-c".into()));
+        assert_eq!(iter.next().unwrap(), ("b".into(), "val-b".into()));
+        assert_eq!(iter.next().unwrap(), ("a".into(), "val-a".into()));
+    }
+
+    #[test]
+    fn reverse_rewind() {
+        let engine = engine!(["a", "val-a"], ["b", "val-b"], ["c", "val-c"]);
+        let mut iter = engine.iter(IteratorOptions {
+            filter: Box::new(|_| true),
+            reverse: true,
+        });
+        assert_eq!(iter.next().unwrap(), ("c".into(), "val-c".into()));
+        assert_eq!(iter.next().unwrap(), ("b".into(), "val-b".into()));
+        iter.rewind();
+        assert_eq!(iter.next().unwrap(), ("c".into(), "val-c".into()));
+        assert_eq!(iter.next().unwrap(), ("b".into(), "val-b".into()));
+        assert_eq!(iter.next().unwrap(), ("a".into(), "val-a".into()));
+    }
+
+    #[test]
+    fn seek() {
+        let engine = engine!(["a", "val-a"], ["b", "val-b"], ["c", "val-c"]);
+        let mut iter = engine.iter(IteratorOptions::default());
+        iter.seek("b".into());
+        assert_eq!(iter.next().unwrap(), ("b".into(), "val-b".into()));
+    }
+
+    #[test]
+    fn reverse_seek() {
+        let engine = engine!(["a", "val-a"], ["b", "val-b"], ["c", "val-c"]);
+        let mut iter = engine.iter(IteratorOptions {
+            filter: Box::new(|_| true),
+            reverse: true,
+        });
+        iter.seek("b".into());
+        assert_eq!(iter.next().unwrap(), ("b".into(), "val-b".into()));
+        assert_eq!(iter.next().unwrap(), ("a".into(), "val-a".into()));
+    }
+}
