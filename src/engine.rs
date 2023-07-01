@@ -190,7 +190,6 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
 #[cfg(test)]
 mod tests {
     use crate::errors::Errors;
-    use crate::mock::engine_wrapper::EngineWrapper;
     use crate::{ecast, engine};
     use bytes::Bytes;
 

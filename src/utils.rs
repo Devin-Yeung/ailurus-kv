@@ -2,6 +2,7 @@
 use {log::LevelFilter, std::io::Write};
 
 #[cfg(feature = "debug")]
+#[allow(dead_code)]
 pub(crate) fn logging() {
     env_logger::Builder::new()
         .format(|buf, record| {
