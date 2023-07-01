@@ -220,4 +220,19 @@ mod tests {
         let x = db.get("Non Exist".into());
         assert_eq!(ecast!(x), Err(Errors::KeyNotFound));
     }
+
+    #[test]
+    fn delete_exist() {
+        let mut db = engine!(["Hello", "World"]);
+        assert_eq!(ecast!(db.delete("Hello".into())), Ok(()));
+    }
+
+    #[test]
+    fn delete_non_exist() {
+        let mut db = engine!(["Hello", "World"]);
+        assert_eq!(
+            ecast!(db.delete("non_exist".into())),
+            Err(Errors::KeyNotFound)
+        );
+    }
 }
