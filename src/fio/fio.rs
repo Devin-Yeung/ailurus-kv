@@ -28,7 +28,7 @@ impl FileIO {
             }),
             Err(e) => {
                 error!("{}", e);
-                Err(Errors::FailToOpenFile.into())
+                err!(Errors::FailToOpenFile)
             }
         };
     }
@@ -39,8 +39,9 @@ impl IOManager for FileIO {
         let reader = self.fd.read();
         reader.read_exact_at(buf, offset).map_err(|e| {
             error!("{}", e);
-            Errors::FailToReadFromFile.into()
-        })
+            Errors::FailToReadFromFile
+        })?;
+        Ok(())
     }
 
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
@@ -49,7 +50,7 @@ impl IOManager for FileIO {
             Ok(n) => Ok(n),
             Err(e) => {
                 error!("{}", e);
-                Err(Errors::FailToWriteToFile.into())
+                err!(Errors::FailToWriteToFile)
             }
         };
     }

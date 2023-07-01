@@ -1,6 +1,5 @@
 use crate::data::data_file::{DataFile, DATAFILE_SUFFIX, INITIAL_DATAFILE_ID};
 use crate::data::log_record::{LogRecord, LogRecordPos, LogRecordType};
-use crate::errors::Errors::IndexUpdateFail;
 use crate::errors::{Errors, Result};
 use crate::index::indexer;
 use crate::{err, index, options};
@@ -67,7 +66,7 @@ impl Engine {
         let log_record_pos = self.append_log_record(record)?;
         match self.index.put(key.to_vec(), log_record_pos) {
             true => Ok(()),
-            false => Err(IndexUpdateFail.into()),
+            false => err!(Errors::IndexUpdateFail),
         }
     }
 
@@ -121,11 +120,11 @@ impl Engine {
         match log_record {
             // already check the existence of key, if we got a `None` from datafile (indicate an EOF),
             // it means datafiles must have been destroyed or something unexpected happened
-            None => Err(Errors::InternalError.into()),
+            None => err!(Errors::InternalError),
             Some(record) => {
                 match record.record_type {
                     LogRecordType::Normal => Ok(record.value.into()),
-                    LogRecordType::Deleted => Err(Errors::KeyNotFound.into()), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
+                    LogRecordType::Deleted => err!(Errors::KeyNotFound), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
                 }
             }
         }
