@@ -233,4 +233,13 @@ mod tests {
             Err(Errors::KeyNotFound)
         );
     }
+
+    #[test]
+    fn delete_non_exist_in_empty_db() {
+        let mut db = engine!();
+        assert_eq!(
+            ecast!(db.delete("non_exist".into())),
+            Err(Errors::KeyNotFound)
+        );
+    }
 }
