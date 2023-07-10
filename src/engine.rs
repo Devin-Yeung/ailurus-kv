@@ -108,6 +108,14 @@ impl Engine {
         self.at(&pos)
     }
 
+    pub fn sync(&self) -> Result<()> {
+        self.active_file.sync()?;
+        for datafile in self.older_file.values() {
+            datafile.sync()?;
+        }
+        Ok(())
+    }
+
     pub fn at(&self, pos: &LogRecordPos) -> Result<Bytes> {
         let log_record = match self.active_file.id() == pos.file_id {
             true => self.active_file.read(pos.offset)?,
