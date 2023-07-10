@@ -197,8 +197,10 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
 #[cfg(test)]
 mod tests {
     use crate::errors::Errors;
+    use crate::mock::engine_wrapper::{EngineWrapper, ENGINEDISTRIBUTOR};
     use crate::{ecast, engine};
     use bytes::Bytes;
+    use std::fs;
 
     #[test]
     fn simple_put_and_get() {
@@ -249,5 +251,99 @@ mod tests {
             ecast!(db.delete("non_exist".into())),
             Err(Errors::KeyNotFound)
         );
+    }
+
+    #[test]
+    fn fulfill_one_datafile() {
+        let mut db = EngineWrapper::new(
+            crate::options::OptionsBuilder::default()
+                .dir_path(ENGINEDISTRIBUTOR.path())
+                .sync_writes(false) // performance consideration
+                .data_file_size(8 * 1000) // 8KB per datafile
+                .build()
+                .unwrap(),
+        );
+
+        // fulfill the datafile
+        for i in 0..500 {
+            /*
+            | 1B for Type  | 4B for CRC  | 1B for keysz |
+            | 1B for valsz | 4B for key  | 5B for value |
+            ==> 16B in total
+            */
+            let key = format!("{:04}", i);
+            let val = format!("{:05}", i);
+            db.put(key.into(), val.into()).unwrap();
+        }
+        db.sync().unwrap();
+
+        let path = db.path().to_path_buf().canonicalize().unwrap();
+        assert_eq!(
+            fs::read_dir(&path)
+                .unwrap()
+                .flatten()
+                .collect::<Vec<_>>()
+                .len(),
+            1
+        );
+
+        // This record should be in a new datafile
+        db.put("Hello".into(), "World".into()).unwrap();
+        db.sync().unwrap();
+        assert_eq!(
+            fs::read_dir(&path)
+                .unwrap()
+                .flatten()
+                .collect::<Vec<_>>()
+                .len(),
+            2
+        )
+    }
+
+    #[test]
+    fn datafile_remaining_not_enough() {
+        let mut db = EngineWrapper::new(
+            crate::options::OptionsBuilder::default()
+                .dir_path(ENGINEDISTRIBUTOR.path())
+                .sync_writes(false) // performance consideration
+                .data_file_size(8 * 1000) // 8KB per datafile
+                .build()
+                .unwrap(),
+        );
+
+        // not fulfill the datafile, but only 16 bytes available
+        for i in 0..499 {
+            /*
+            | 1B for Type  | 4B for CRC  | 1B for keysz |
+            | 1B for valsz | 4B for key  | 5B for value |
+            ==> 16B in total
+            */
+            let key = format!("{:04}", i);
+            let val = format!("{:05}", i);
+            db.put(key.into(), val.into()).unwrap();
+        }
+        db.sync().unwrap();
+
+        let path = db.path().to_path_buf().canonicalize().unwrap();
+        assert_eq!(
+            fs::read_dir(&path)
+                .unwrap()
+                .flatten()
+                .collect::<Vec<_>>()
+                .len(),
+            1
+        );
+
+        // This record required 17 bytes, should be in a new datafile
+        db.put("Hello".into(), "World".into()).unwrap();
+        db.sync().unwrap();
+        assert_eq!(
+            fs::read_dir(&path)
+                .unwrap()
+                .flatten()
+                .collect::<Vec<_>>()
+                .len(),
+            2
+        )
     }
 }
