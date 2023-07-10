@@ -346,4 +346,32 @@ mod tests {
             2
         )
     }
+
+    #[test]
+    fn reopen() {
+        let mut db = EngineWrapper::new(
+            crate::options::OptionsBuilder::default()
+                .dir_path(ENGINEDISTRIBUTOR.path())
+                .data_file_size(2 * 1000)
+                .sync_writes(false)
+                .build()
+                .unwrap(),
+        );
+
+        for i in 0..1024 {
+            /*
+            | 1B for Type  | 4B for CRC  | 1B for keysz |
+            | 1B for valsz | 4B for key  | 5B for value |
+            ==> 16B in total
+            */
+            let key = format!("{:04}", i);
+            let val = format!("{:05}", i);
+            db.put(key.into(), val.into()).unwrap();
+        }
+        db.sync().unwrap();
+
+        let db = db.reopen();
+        assert_eq!(db.get("0000".into()).unwrap(), "00000");
+        assert_eq!(db.get("1023".into()).unwrap(), "01023");
+    }
 }
