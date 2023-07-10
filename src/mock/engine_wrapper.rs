@@ -1,5 +1,5 @@
 use crate::engine::Engine;
-use crate::options::{IndexType, Options};
+use crate::options::IndexType;
 use lazy_static::lazy_static;
 use std::fs;
 use std::ops::{Deref, DerefMut};
@@ -86,12 +86,13 @@ impl EngineWrapper {
 
 impl Default for EngineWrapper {
     fn default() -> Self {
-        let opts = Options {
-            dir_path: ENGINEDISTRIBUTOR.path(),
-            data_file_size: 8 * 1024 * 1024, // 8 MB
-            sync_writes: true,
-            index_type: IndexType::BTree,
-        };
+        let opts = crate::options::OptionsBuilder::default()
+            .dir_path(ENGINEDISTRIBUTOR.path())
+            .data_file_size(8 * 1024) // 8 KB, easy to test
+            .sync_writes(true)
+            .index_type(IndexType::BTree)
+            .build()
+            .unwrap();
         EngineWrapper::new(opts)
     }
 }

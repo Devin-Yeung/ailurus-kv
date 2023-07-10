@@ -1,5 +1,6 @@
 use crate::err;
 use crate::errors::{Errors, Result};
+use derive_builder::Builder;
 use std::path::PathBuf;
 
 #[non_exhaustive]
@@ -9,15 +10,18 @@ pub enum IndexType {
     SkipList,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Builder)]
 pub struct Options {
     /// location of database
     pub dir_path: PathBuf,
     /// Size of data file
+    #[builder(default = "8 * 1024 * 1024")]
     pub data_file_size: u64,
     /// Whether to sync in each writes
+    #[builder(default = "false")]
     pub sync_writes: bool,
     /// Indexing Method
+    #[builder(default = "crate::options::IndexType::BTree")]
     pub index_type: IndexType,
 }
 
