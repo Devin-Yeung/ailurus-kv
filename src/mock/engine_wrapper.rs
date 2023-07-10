@@ -3,7 +3,7 @@ use crate::options::IndexType;
 use lazy_static::lazy_static;
 use std::fs;
 use std::ops::{Deref, DerefMut};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 const PREFIX: &str = "tmp/engine";
@@ -19,7 +19,7 @@ macro_rules! engine {
 }
 
 lazy_static! {
-    static ref ENGINEDISTRIBUTOR: EngineDistributor = EngineDistributor::new();
+    pub static ref ENGINEDISTRIBUTOR: EngineDistributor = EngineDistributor::new();
 }
 pub struct Inner {
     id: u32,
@@ -81,6 +81,10 @@ impl EngineWrapper {
         let engine = Engine::new(self.options.clone()).unwrap();
         let _ = std::mem::replace(&mut self.engine, engine);
         self
+    }
+
+    pub(crate) fn path(&self) -> &Path {
+        &self.path
     }
 }
 
