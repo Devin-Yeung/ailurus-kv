@@ -94,9 +94,10 @@ impl DataFile {
 
         // if remaining bytes is zero, means EOF reached
         let mut header = match (self.io_manager.size()? - offset) as usize {
+            remaining if remaining == 0 => return Ok(None),
             remaining if remaining < max_header_sz => BytesMut::zeroed(remaining),
             remaining if remaining > max_header_sz => BytesMut::zeroed(max_header_sz),
-            _ => return Ok(None),
+            _ => unreachable!(),
         };
 
         self.io_manager.read(&mut header, offset)?;
