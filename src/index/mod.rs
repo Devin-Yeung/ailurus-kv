@@ -4,6 +4,7 @@ use crate::data::log_record::LogRecordPos;
 use crate::errors::Result;
 use crate::index::btree::BTree;
 use crate::options::{IndexType, IteratorOptions};
+use bytes::Bytes;
 
 pub trait Indexer {
     /// Inserts a key-value pair into the index.
@@ -53,6 +54,17 @@ pub trait Indexer {
     ///
     /// A box to an object that implements the `IndexIterator` trait.
     fn iterator(&self, options: IteratorOptions) -> Box<dyn IndexIterator>;
+
+    /// Retrieve the keys stored in the index.
+    ///
+    /// This method returns a vector of `Bytes` representing the keys stored in the index.
+    /// It retrieves the keys in their current order and returns them as a result.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<Bytes>)`: A vector of `Bytes` representing the keys if the operation is successful.
+    /// * `Err(Error)`: An error variant if there is a failure in retrieving the keys.
+    fn keys(&self) -> Result<Vec<Bytes>>;
 }
 
 pub trait Indexable {

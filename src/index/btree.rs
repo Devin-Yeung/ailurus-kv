@@ -3,6 +3,7 @@ use crate::data::log_record::{LogRecordPos, LogRecordType};
 use crate::errors::Result;
 use crate::index::{IndexIterator, Indexable, Indexer};
 use crate::options::IteratorOptions;
+use bytes::Bytes;
 use parking_lot::RwLock;
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -84,6 +85,14 @@ impl Indexer for BTree {
             index: 0,
             options,
         })
+    }
+
+    fn keys(&self) -> Result<Vec<Bytes>> {
+        let read = self.tree.read();
+        Ok(read
+            .iter()
+            .map(|x| Bytes::copy_from_slice(&x.0))
+            .collect::<Vec<Bytes>>())
     }
 }
 
@@ -284,5 +293,22 @@ mod tests {
             reverse: false,
         });
         assert_eq!(iter.next().unwrap().0, &"b".as_bytes().to_vec());
+    }
+
+    #[test]
+    fn some_keys() {
+        let bt = btree!("a", "b", "c");
+        let expected: Vec<Bytes> = vec!["a", "b", "c"]
+            .into_iter()
+            .map(|x| bytes::Bytes::from(x))
+            .collect();
+        assert_eq!(bt.keys().unwrap(), expected);
+    }
+
+    #[test]
+    fn no_keys() {
+        let bt = btree!();
+        let expected: Vec<Bytes> = vec![];
+        assert_eq!(bt.keys().unwrap(), expected);
     }
 }
