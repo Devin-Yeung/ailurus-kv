@@ -1,4 +1,5 @@
 use crate::engine::Engine;
+use crate::errors::Result;
 use crate::index::IndexIterator;
 use crate::options::IteratorOptions;
 use bytes::Bytes;
@@ -20,6 +21,10 @@ impl Engine {
             index_iterator: self.index.iterator(options),
             engine: self,
         }
+    }
+
+    pub fn keys(&self) -> Result<Vec<Bytes>> {
+        self.index.keys()
     }
 }
 
@@ -57,6 +62,7 @@ mod tests {
     use crate::engine;
     use crate::iterator::Entry;
     use crate::options::IteratorOptions;
+    use bytes::Bytes;
 
     macro_rules! entry {
         ($key:expr, $val:expr) => {{
@@ -147,5 +153,17 @@ mod tests {
         iter.seek("b".into());
         assert_eq!(iter.next(), Some(entry!["b", "val-b"]));
         assert_eq!(iter.next(), Some(entry!["a", "val-a"]));
+    }
+
+    #[test]
+    fn some_keys() {
+        let engine = engine!(["a", "val-a"], ["b", "val-b"], ["c", "val-c"]);
+        assert_eq!(
+            engine.keys().unwrap(),
+            vec!["a", "b", "c"]
+                .into_iter()
+                .map(|x| bytes::Bytes::from(x))
+                .collect::<Vec<Bytes>>()
+        )
     }
 }
