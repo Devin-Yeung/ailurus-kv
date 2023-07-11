@@ -134,6 +134,7 @@ mod tests {
     macro_rules! btree {
         // Construct btree, cares about key value pair
         ($({$key:expr, {$id:expr, $offset:expr}}),* $(,)?) => {{
+            #[allow(unused_mut)]
             let mut b = $crate::index::btree::BTree::new();
             $(b.put(
                 $key.as_bytes().to_vec(),
