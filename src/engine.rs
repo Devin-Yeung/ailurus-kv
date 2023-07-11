@@ -12,7 +12,7 @@ use std::path::Path;
 pub struct Engine {
     pub(crate) options: options::Options,
     active_file: DataFile,
-    older_file: HashMap<u32, DataFile>,
+    idle_file: HashMap<u32, DataFile>,
     pub(crate) index: Box<dyn index::Indexer>,
 }
 
@@ -47,7 +47,7 @@ impl Engine {
         Ok(Engine {
             options: opts,
             active_file: active,
-            older_file: datafiles,
+            idle_file: datafiles,
             index,
         })
     }
@@ -110,7 +110,7 @@ impl Engine {
 
     pub fn sync(&self) -> Result<()> {
         self.active_file.sync()?;
-        for datafile in self.older_file.values() {
+        for datafile in self.idle_file.values() {
             datafile.sync()?;
         }
         Ok(())
@@ -119,7 +119,7 @@ impl Engine {
     pub fn at(&self, pos: &LogRecordPos) -> Result<Bytes> {
         let log_record = match self.active_file.id() == pos.file_id {
             true => self.active_file.read(pos.offset)?,
-            false => match self.older_file.get(&pos.file_id) {
+            false => match self.idle_file.get(&pos.file_id) {
                 None => return err!(Errors::DatafileNotFound),
                 Some(x) => x.read(pos.offset)?,
             },
@@ -151,7 +151,7 @@ impl Engine {
             let fid = self.active_file.id();
             let fresh = DataFile::new(dir_path, fid + 1)?;
             // swap out the currently full datafile, swap in a fresh one
-            self.older_file
+            self.idle_file
                 .insert(fid, std::mem::replace(&mut self.active_file, fresh));
         }
 
