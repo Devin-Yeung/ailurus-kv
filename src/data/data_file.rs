@@ -5,6 +5,7 @@ use crate::{err, fio};
 use bytes::{Buf, BytesMut};
 use log::error;
 use prost::{decode_length_delimiter, length_delimiter_len};
+use std::fmt::{Debug, Formatter};
 use std::path::Path;
 
 pub const DATAFILE_SUFFIX: &str = ".data";
@@ -14,6 +15,15 @@ pub struct DataFile {
     id: u32,
     offset: u64,
     io_manager: Box<dyn fio::IOManager>,
+}
+
+impl Debug for DataFile {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DataFile")
+            .field("id", &self.id)
+            .field("offset", &self.offset)
+            .finish()
+    }
 }
 
 impl DataFile {
