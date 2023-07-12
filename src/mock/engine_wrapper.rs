@@ -75,6 +75,7 @@ impl EngineWrapper {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn reopen(mut self) -> EngineWrapper {
         // FIXME: The old engine is not dropped when the reopened engine is opened
         // so the `drop` method of the old engine may not be applied timely
@@ -83,6 +84,7 @@ impl EngineWrapper {
         self
     }
 
+    #[allow(dead_code)]
     pub(crate) fn path(&self) -> &Path {
         &self.path
     }
