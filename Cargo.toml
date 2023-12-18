@@ -16,7 +16,7 @@ log = "0.4.20"
 parking_lot = "0.12.1"
 prost = "0.12.3"
 tempfile = "3.8.1"
-thiserror = "1.0.50"
+thiserror = "1.0.51"
 
 [features]
 default = ["debug"]
