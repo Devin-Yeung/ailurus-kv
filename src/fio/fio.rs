@@ -1,6 +1,6 @@
-use crate::err;
 use crate::errors::{Errors, Result};
 use crate::fio::IOManager;
+use error_stack::ResultExt;
 use log::error;
 use parking_lot::RwLock;
 use std::fs::{File, OpenOptions};
@@ -16,51 +16,38 @@ pub struct FileIO {
 
 impl FileIO {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
-        return match OpenOptions::new()
+        let file = OpenOptions::new()
             .create(true)
             .read(true)
-            .write(true)
             .append(true)
             .open(path)
-        {
-            Ok(file) => Ok(FileIO {
-                fd: Arc::new(RwLock::new(file)),
-            }),
-            Err(e) => {
-                error!("{}", e);
-                err!(Errors::FailToOpenFile)
-            }
-        };
+            .change_context(Errors::FailToOpenFile)?;
+        Ok(FileIO {
+            fd: Arc::new(RwLock::new(file)),
+        })
     }
 }
 
 impl IOManager for FileIO {
     fn read(&self, buf: &mut [u8], offset: u64) -> Result<()> {
         let reader = self.fd.read();
-        reader.read_exact_at(buf, offset).map_err(|e| {
-            error!("{}", e);
-            Errors::FailToReadFromFile
-        })?;
+        reader
+            .read_exact_at(buf, offset)
+            .change_context(Errors::FailToReadFromFile)?;
         Ok(())
     }
 
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let mut writer = self.fd.write();
-        return match writer.write(buf) {
-            Ok(n) => Ok(n),
-            Err(e) => {
-                error!("{}", e);
-                err!(Errors::FailToWriteToFile)
-            }
-        };
+        let bytes_read = writer
+            .write(buf)
+            .change_context(Errors::FailToWriteToFile)?;
+        Ok(bytes_read)
     }
 
     fn sync(&self) -> Result<()> {
         let reader = self.fd.read();
-        if let Err(e) = reader.sync_all() {
-            error!("{}", e);
-            return err!(Errors::FailToSyncFile);
-        }
+        reader.sync_all().change_context(Errors::FailToSyncFile)?;
         Ok(())
     }
 
@@ -105,9 +92,6 @@ mod tests {
 
         let mut buf = vec![0; data.len()];
         let result = file.read(&mut buf, 0);
-        #[cfg(not(feature = "debug"))]
-        assert_eq!(result, Ok(()));
-        #[cfg(feature = "debug")]
         assert_eq!(result.unwrap(), ());
         assert_eq!(buf, data);
 
@@ -121,9 +105,7 @@ mod tests {
         let data = b"Hello, World!";
 
         let result = file.write(data);
-        #[cfg(not(feature = "debug"))]
-        assert_eq!(result, Ok(data.len()));
-        #[cfg(feature = "debug")]
+
         assert_eq!(result.unwrap(), data.len());
 
         let mut buf = vec![0; data.len()];

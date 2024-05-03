@@ -74,7 +74,7 @@ impl Indexer for BTree {
     fn iterator(&self, options: IteratorOptions) -> Box<dyn IndexIterator> {
         let read = self.tree.read();
         // TODO: [perf] memory usage maybe very large
-        let mut items: Vec<_> = read.iter().map(|x| (x.0.clone(), x.1.clone())).collect();
+        let mut items: Vec<_> = read.iter().map(|x| (x.0.clone(), *x.1)).collect();
 
         if options.reverse {
             items.reverse();
@@ -91,7 +91,7 @@ impl Indexer for BTree {
         let read = self.tree.read();
         Ok(read
             .iter()
-            .map(|x| Bytes::copy_from_slice(&x.0))
+            .map(|x| Bytes::copy_from_slice(x.0))
             .collect::<Vec<Bytes>>())
     }
 }
@@ -300,7 +300,7 @@ mod tests {
         let bt = btree!("a", "b", "c");
         let expected: Vec<Bytes> = vec!["a", "b", "c"]
             .into_iter()
-            .map(|x| bytes::Bytes::from(x))
+            .map(bytes::Bytes::from)
             .collect();
         assert_eq!(bt.keys().unwrap(), expected);
     }

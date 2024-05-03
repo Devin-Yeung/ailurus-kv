@@ -100,8 +100,8 @@ pub fn indexer<'a, D>(datafiles: D, index_type: &IndexType) -> Result<Box<dyn In
 where
     D: IntoIterator<Item = &'a DataFile>,
 {
-    return match index_type {
+    match index_type {
         IndexType::BTree => Ok(BTree::index(datafiles)?),
         IndexType::SkipList => todo!(),
-    };
+    }
 }

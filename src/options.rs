@@ -1,6 +1,6 @@
-use crate::err;
 use crate::errors::{Errors, Result};
 use derive_builder::Builder;
+use error_stack::{Report, ResultExt};
 use std::path::PathBuf;
 
 #[non_exhaustive]
@@ -27,11 +27,12 @@ pub struct Options {
 
 pub(crate) fn check_options(opts: &Options) -> Result<()> {
     if opts.dir_path.to_str().is_none() {
-        return err!(Errors::InvalidDbPath);
+        return Err(Report::new(Errors::InvalidDbPath))
+            .attach_printable_lazy(|| format!("Invalid database path: {:?}", opts.dir_path));
     }
 
     if opts.data_file_size == 0 {
-        return err!(Errors::DatafileSizeTooSmall);
+        return Err(Report::new(Errors::DatafileSizeTooSmall));
     }
 
     Ok(())

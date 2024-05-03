@@ -162,7 +162,7 @@ mod tests {
             engine.keys().unwrap(),
             vec!["a", "b", "c"]
                 .into_iter()
-                .map(|x| bytes::Bytes::from(x))
+                .map(bytes::Bytes::from)
                 .collect::<Vec<Bytes>>()
         )
     }
