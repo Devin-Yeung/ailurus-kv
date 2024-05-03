@@ -6,15 +6,20 @@ use crate::{index, options};
 use bytes::Bytes;
 use error_stack::{Report, ResultExt};
 
+use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::sync::atomic::AtomicUsize;
+use std::sync::Arc;
 
 pub struct Engine {
     pub(crate) options: options::Options,
     active_file: DataFile,
     idle_file: HashMap<u32, DataFile>,
     pub(crate) index: Box<dyn index::Indexer>,
+    pub(crate) batch_commit_lock: Mutex<()>, // Lock to ensure the transaction is in serial
+    pub(crate) seq_no: Arc<AtomicUsize>,     // Sequence number for transaction
 }
 
 impl Engine {
@@ -47,6 +52,8 @@ impl Engine {
             active_file: active,
             idle_file: datafiles,
             index,
+            batch_commit_lock: Mutex::new(()),
+            seq_no: Arc::new(AtomicUsize::new(0)),
         })
     }
 

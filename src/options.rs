@@ -55,8 +55,8 @@ impl Default for IteratorOptions {
 #[derive(Clone, Builder)]
 pub struct WriteBatchOptions {
     /// Size of batch
-    #[builder(default = "8 * 1024 * 1024")]
-    pub batch_size: u32,
+    #[builder(default = "64 * 64")]
+    pub batch_size: usize,
     /// Whether to sync when commit happens
     #[builder(default = "true")]
     pub sync_on_commit: bool,

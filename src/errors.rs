@@ -33,6 +33,8 @@ pub enum Errors {
     InvalidDbPath,
     #[error("Something unexpected happen")]
     InternalError,
+    #[error("Exceed max batch size")]
+    BatchSizeExceeded,
 }
 
 pub type Result<T> = std::result::Result<T, Report<Errors>>;
