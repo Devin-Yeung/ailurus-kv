@@ -180,7 +180,8 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
             let split: Vec<&str> = fname.to_str().unwrap().split('.').collect();
             let fid = split[0]
                 .parse::<u32>()
-                .change_context(Errors::DatafileCorrupted)?;
+                .change_context(Errors::DatafileCorrupted)
+                .attach_printable_lazy(|| format!("Invalid datafile name: {:?}", fname))?;
             datafiles.insert(fid, DataFile::new(&path, fid)?);
         }
     }
