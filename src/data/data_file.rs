@@ -1,8 +1,9 @@
 use crate::data::log_record::LogRecord;
 use crate::errors::{Errors, Result};
+use crate::fio;
 use crate::fio::io_manager;
-use crate::{err, fio};
 use bytes::{Buf, BytesMut};
+use error_stack::Report;
 use log::error;
 use prost::{decode_length_delimiter, length_delimiter_len};
 use std::fmt::{Debug, Formatter};
@@ -36,7 +37,7 @@ impl DataFile {
             }
             false => {
                 error!("Database dir {:?} Not exist", fname);
-                return err!(Errors::DatafileNotFound);
+                return Err(Report::new(Errors::DatafileNotFound));
             }
         };
 
@@ -58,7 +59,7 @@ impl DataFile {
                 .len(),
             Err(e) => {
                 error!("{}", e);
-                return err!(Errors::FailToOpenFile);
+                return Err(Report::new(Errors::FailToOpenFile));
             }
         };
 
@@ -143,7 +144,7 @@ impl DataFile {
 
         if crc != log_record.crc() {
             error!("CRC does not match");
-            return err!(Errors::DatafileCorrupted);
+            return Err(Report::new(Errors::DatafileCorrupted));
         }
 
         Ok(Some(log_record))

@@ -18,17 +18,3 @@ pub(crate) fn logging() {
         .filter(None, LevelFilter::Debug)
         .init();
 }
-
-#[macro_export]
-macro_rules! ecast {
-    ($err:expr) => {{
-        #[cfg(feature = "debug")]
-        {
-            $err.map_err(|e| e.downcast::<$crate::errors::Errors>().unwrap())
-        }
-        #[cfg(not(feature = "debug"))]
-        {
-            $err
-        }
-    }};
-}

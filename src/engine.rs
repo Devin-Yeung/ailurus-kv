@@ -2,8 +2,9 @@ use crate::data::data_file::{DataFile, DATAFILE_SUFFIX, INITIAL_DATAFILE_ID};
 use crate::data::log_record::{LogRecord, LogRecordPos, LogRecordType};
 use crate::errors::{Errors, Result};
 use crate::index::indexer;
-use crate::{err, index, options};
+use crate::{index, options};
 use bytes::Bytes;
+use error_stack::{Report, ResultExt};
 use log::error;
 use std::collections::HashMap;
 use std::fs;
@@ -22,10 +23,7 @@ impl Engine {
         options::check_options(&opts)?;
 
         if opts.dir_path.is_dir() {
-            if let Err(e) = fs::create_dir_all(&opts.dir_path) {
-                error!("{}", e);
-                return err!(Errors::CreateDbDirFail);
-            }
+            fs::create_dir_all(&opts.dir_path).change_context(Errors::CreateDbDirFail)?;
         }
 
         // load the datafiles (including active and inactive)
@@ -38,7 +36,7 @@ impl Engine {
                 DataFile::new(&opts.dir_path, INITIAL_DATAFILE_ID)?
             }
             _ => {
-                // the datafile with largest fid is the currently active datafile
+                // the datafile with the largest fid is the currently active datafile
                 let active_fid = *datafiles.keys().max().unwrap();
                 datafiles.remove(&active_fid).unwrap()
             }
@@ -54,7 +52,7 @@ impl Engine {
 
     pub fn put(&mut self, key: Bytes, value: Bytes) -> Result<()> {
         if key.is_empty() {
-            return err!(Errors::EmptyKey);
+            return Err(Report::new(Errors::EmptyKey));
         }
 
         let record = LogRecord {
@@ -66,17 +64,17 @@ impl Engine {
         let log_record_pos = self.append_log_record(record)?;
         match self.index.put(key.to_vec(), log_record_pos) {
             true => Ok(()),
-            false => err!(Errors::IndexUpdateFail),
+            false => Err(Report::new(Errors::IndexUpdateFail)),
         }
     }
 
     pub fn delete(&mut self, key: Bytes) -> Result<()> {
         if key.is_empty() {
-            return err!(Errors::EmptyKey);
+            return Err(Report::new(Errors::EmptyKey));
         }
 
         if self.index.get(key.to_vec()).is_none() {
-            return err!(Errors::KeyNotFound);
+            return Err(Report::new(Errors::KeyNotFound));
         };
 
         let record = LogRecord {
@@ -89,19 +87,19 @@ impl Engine {
 
         // update index
         if !self.index.delete(key.to_vec()) {
-            return err!(Errors::IndexUpdateFail);
+            return Err(Report::new(Errors::IndexUpdateFail));
         }
         Ok(())
     }
 
     pub fn get(&self, key: Bytes) -> Result<Bytes> {
         if key.is_empty() {
-            return err!(Errors::EmptyKey);
+            return Err(Report::new(Errors::EmptyKey));
         }
 
         // Check the existence of the key
         let pos = match self.index.get(key.to_vec()) {
-            None => return err!(Errors::KeyNotFound),
+            None => return Err(Report::new(Errors::KeyNotFound)),
             Some(x) => x,
         };
 
@@ -120,7 +118,7 @@ impl Engine {
         let log_record = match self.active_file.id() == pos.file_id {
             true => self.active_file.read(pos.offset)?,
             false => match self.idle_file.get(&pos.file_id) {
-                None => return err!(Errors::DatafileNotFound),
+                None => return Err(Report::new(Errors::DatafileNotFound)),
                 Some(x) => x.read(pos.offset)?,
             },
         };
@@ -128,11 +126,11 @@ impl Engine {
         match log_record {
             // already check the existence of key, if we got a `None` from datafile (indicate an EOF),
             // it means datafiles must have been destroyed or something unexpected happened
-            None => err!(Errors::InternalError),
+            None => Err(Report::new(Errors::InternalError)),
             Some(record) => {
                 match record.record_type {
                     LogRecordType::Normal => Ok(record.value.into()),
-                    LogRecordType::Deleted => err!(Errors::KeyNotFound), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
+                    LogRecordType::Deleted => Err(Report::new(Errors::KeyNotFound)), // TODO: design decision, Result<Option<Bytes>> or Result<Bytes>
                 }
             }
         }
@@ -180,13 +178,9 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
         if fname.to_str().unwrap().ends_with(DATAFILE_SUFFIX) {
             // example datafile name: `00001.data`
             let split: Vec<&str> = fname.to_str().unwrap().split('.').collect();
-            let fid = match split[0].parse::<u32>() {
-                Ok(fid) => fid,
-                Err(e) => {
-                    error!("{}", e);
-                    return err!(Errors::DatafileCorrupted);
-                }
-            };
+            let fid = split[0]
+                .parse::<u32>()
+                .change_context(Errors::DatafileCorrupted)?;
             datafiles.insert(fid, DataFile::new(&path, fid)?);
         }
     }
@@ -196,9 +190,9 @@ fn load_datafiles<P: AsRef<Path>>(path: P) -> Result<HashMap<u32, DataFile>> {
 
 #[cfg(test)]
 mod tests {
+    use crate::engine;
     use crate::errors::Errors;
     use crate::mock::engine_wrapper::{EngineWrapper, ENGINEDISTRIBUTOR};
-    use crate::{ecast, engine};
     use bytes::Bytes;
     use std::fs;
 
@@ -226,30 +220,36 @@ mod tests {
     fn get_non_exist_key() {
         let db = engine!();
         let x = db.get("Non Exist".into());
-        assert_eq!(ecast!(x), Err(Errors::KeyNotFound));
+        assert_eq!(
+            x.unwrap_err().downcast_ref::<Errors>().unwrap(),
+            &Errors::KeyNotFound
+        );
     }
 
     #[test]
     fn delete_exist() {
         let mut db = engine!(["Hello", "World"]);
-        assert_eq!(ecast!(db.delete("Hello".into())), Ok(()));
+        let report = db.delete("Hello".into());
+        assert_eq!(report.unwrap(), ());
     }
 
     #[test]
     fn delete_non_exist() {
         let mut db = engine!(["Hello", "World"]);
+        let report = db.delete("non_exist".into());
         assert_eq!(
-            ecast!(db.delete("non_exist".into())),
-            Err(Errors::KeyNotFound)
+            report.unwrap_err().downcast_ref::<Errors>().unwrap(),
+            &Errors::KeyNotFound
         );
     }
 
     #[test]
     fn delete_non_exist_in_empty_db() {
         let mut db = engine!();
+        let report = db.delete("non_exist".into());
         assert_eq!(
-            ecast!(db.delete("non_exist".into())),
-            Err(Errors::KeyNotFound)
+            report.unwrap_err().downcast_ref::<Errors>().unwrap(),
+            &Errors::KeyNotFound,
         );
     }
 
