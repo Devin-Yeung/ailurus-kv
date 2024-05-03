@@ -18,7 +18,3 @@ parking_lot = "0.12.2"
 prost = "0.12.4"
 tempfile = "3.10.1"
 thiserror = "1.0.59"
-
-[features]
-default = ["debug"]
-debug = []
