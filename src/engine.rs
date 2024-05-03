@@ -5,7 +5,7 @@ use crate::index::indexer;
 use crate::{index, options};
 use bytes::Bytes;
 use error_stack::{Report, ResultExt};
-use log::error;
+
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;

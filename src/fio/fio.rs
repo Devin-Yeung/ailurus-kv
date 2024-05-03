@@ -19,13 +19,12 @@ impl FileIO {
         let file = OpenOptions::new()
             .create(true)
             .read(true)
-            .write(true)
             .append(true)
             .open(path)
             .change_context(Errors::FailToOpenFile)?;
-        return Ok(FileIO {
+        Ok(FileIO {
             fd: Arc::new(RwLock::new(file)),
-        });
+        })
     }
 }
 
