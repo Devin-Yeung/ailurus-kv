@@ -28,7 +28,7 @@ pub struct Options {
 pub(crate) fn check_options(opts: &Options) -> Result<()> {
     if opts.dir_path.to_str().is_none() {
         return Err(Report::new(Errors::InvalidDbPath))
-            .attach_printable_lazy(|| format!("Invalid database path: {:?}", opts.dir_path));
+            .attach_with(|| format!("Invalid database path: {:?}", opts.dir_path));
     }
 
     if opts.data_file_size == 0 {
